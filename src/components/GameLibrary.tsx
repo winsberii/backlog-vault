@@ -1,9 +1,20 @@
 import { useState } from "react";
 import { ViewMode } from "@/pages/Index";
-import { GameCard } from "@/components/GameCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Search, 
+  Filter, 
+  Edit, 
+  Play, 
+  CheckCircle, 
+  Clock, 
+  Calendar, 
+  DollarSign,
+  Copy,
+  Trash2 
+} from "lucide-react";
 import witcher3Cover from "@/assets/witcher3-cover.jpg";
 import cyberpunkCover from "@/assets/cyberpunk-cover.jpg";
 import godofwarCover from "@/assets/godofwar-cover.jpg";
@@ -108,10 +119,10 @@ export const GameLibrary = ({ viewMode, onEditGame }: GameLibraryProps) => {
         </Button>
       </div>
 
-      {/* Games Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {/* Games List */}
+      <div className="space-y-2">
         {filteredGames.map((game) => (
-          <GameCard
+          <GameListItem
             key={game.id}
             game={game}
             viewMode={viewMode}
@@ -134,6 +145,189 @@ export const GameLibrary = ({ viewMode, onEditGame }: GameLibraryProps) => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+interface GameListItemProps {
+  game: {
+    id: number;
+    title: string;
+    platform: string;
+    playthroughPlatform: string;
+    coverImage: string;
+    isCurrentlyPlaying: boolean;
+    isCompleted: boolean;
+    needsPurchase: boolean;
+    estimatedDuration: number;
+    actualPlaytime: number;
+    completionDate: string | null;
+    price: number | null;
+    comment: string;
+    tags: string[];
+  };
+  viewMode: ViewMode;
+  onEdit: () => void;
+}
+
+const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
+  const handleClone = () => {
+    console.log("Clone game:", game.id);
+  };
+
+  const handleDelete = () => {
+    console.log("Delete game:", game.id);
+  };
+
+  const handleToggleCurrentlyPlaying = () => {
+    console.log("Toggle currently playing:", game.id);
+  };
+
+  const handleMarkCompleted = () => {
+    console.log("Mark completed:", game.id);
+  };
+
+  return (
+    <div className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:bg-secondary/20 transition-colors group">
+      {/* Cover Image */}
+      <div className="flex-shrink-0">
+        <img 
+          src={game.coverImage} 
+          alt={game.title}
+          className="w-16 h-20 object-cover rounded border"
+        />
+      </div>
+
+      {/* Game Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-lg truncate">{game.title}</h3>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+              <span>Platform: <span className="text-foreground">{game.platform}</span></span>
+              
+              {viewMode === 'backlog' && (
+                <>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {game.estimatedDuration}h
+                  </span>
+                  {game.actualPlaytime > 0 && (
+                    <span>Played: {game.actualPlaytime}h</span>
+                  )}
+                </>
+              )}
+              
+              {viewMode === 'wishlist' && game.price && (
+                <span className="flex items-center gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  ${game.price}
+                </span>
+              )}
+              
+              {viewMode === 'completed' && game.completionDate && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {new Date(game.completionDate).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+            
+            {game.comment && (
+              <p className="text-sm text-muted-foreground mt-2 line-clamp-1">
+                {game.comment}
+              </p>
+            )}
+            
+            {game.tags.length > 0 && (
+              <div className="flex gap-1 mt-2">
+                {game.tags.slice(0, 3).map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+                {game.tags.length > 3 && (
+                  <Badge variant="secondary" className="text-xs">
+                    +{game.tags.length - 3}
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Status Badges */}
+          <div className="flex flex-col gap-1">
+            {game.isCurrentlyPlaying && (
+              <Badge className="bg-accent text-accent-foreground">
+                <Play className="h-3 w-3 mr-1" />
+                Playing
+              </Badge>
+            )}
+            {game.isCompleted && (
+              <Badge className="bg-green-500 text-white">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Done
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex-shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onEdit}
+          className="border-border hover:bg-secondary/50"
+        >
+          <Edit className="h-3 w-3" />
+        </Button>
+        
+        {viewMode === 'backlog' && !game.isCurrentlyPlaying && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleToggleCurrentlyPlaying}
+            className="border-border hover:bg-secondary/50"
+            title="Mark as currently playing"
+          >
+            <Play className="h-3 w-3" />
+          </Button>
+        )}
+        
+        {viewMode === 'backlog' && !game.isCompleted && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleMarkCompleted}
+            className="border-border hover:bg-secondary/50"
+            title="Mark as completed"
+          >
+            <CheckCircle className="h-3 w-3" />
+          </Button>
+        )}
+        
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleClone}
+          className="border-border hover:bg-secondary/50"
+          title="Clone game"
+        >
+          <Copy className="h-3 w-3" />
+        </Button>
+        
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDelete}
+          className="border-border hover:bg-destructive hover:text-destructive-foreground"
+          title="Delete game"
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </div>
     </div>
   );
 };
