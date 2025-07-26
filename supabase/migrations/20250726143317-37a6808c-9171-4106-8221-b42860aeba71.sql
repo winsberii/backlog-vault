@@ -1,0 +1,2 @@
+-- Enable authentication
+-- No additional tables needed for basic auth, just using Supabase's built-in auth.users table
