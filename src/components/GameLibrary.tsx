@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ViewMode } from "@/pages/Index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,86 +15,76 @@ import {
   Copy,
   Trash2 
 } from "lucide-react";
-import witcher3Cover from "@/assets/witcher3-cover.jpg";
-import cyberpunkCover from "@/assets/cyberpunk-cover.jpg";
-import godofwarCover from "@/assets/godofwar-cover.jpg";
-
-// Mock data for demonstration
-const mockGames = [
-  {
-    id: 1,
-    title: "The Witcher 3: Wild Hunt",
-    platform: "PC",
-    playthroughPlatform: "Steam",
-    coverImage: witcher3Cover,
-    isCurrentlyPlaying: true,
-    isCompleted: false,
-    needsPurchase: false,
-    estimatedDuration: 50,
-    actualPlaytime: 25,
-    completionDate: null,
-    price: null,
-    comment: "Amazing RPG with incredible story and side quests",
-    tags: ["RPG", "Open World"],
-  },
-  {
-    id: 2,
-    title: "Cyberpunk 2077",
-    platform: "PC",
-    playthroughPlatform: "GOG",
-    coverImage: cyberpunkCover,
-    isCurrentlyPlaying: false,
-    isCompleted: false,
-    needsPurchase: true,
-    estimatedDuration: 60,
-    actualPlaytime: 0,
-    completionDate: null,
-    price: 39.99,
-    comment: "Waiting for more patches and DLC",
-    tags: ["RPG", "Cyberpunk"],
-  },
-  {
-    id: 3,
-    title: "God of War",
-    platform: "PlayStation 5",
-    playthroughPlatform: "PlayStation 5",
-    coverImage: godofwarCover,
-    isCurrentlyPlaying: false,
-    isCompleted: true,
-    needsPurchase: false,
-    estimatedDuration: 25,
-    actualPlaytime: 28,
-    completionDate: "2024-01-15",
-    price: null,
-    comment: "Absolutely phenomenal. Perfect story and gameplay.",
-    tags: ["Action", "Adventure"],
-  },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface GameLibraryProps {
   viewMode: ViewMode;
   onEditGame: (game: any) => void;
+  refreshTrigger?: number;
 }
 
-export const GameLibrary = ({ viewMode, onEditGame }: GameLibraryProps) => {
+export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger }: GameLibraryProps) => {
+  const { user } = useAuth();
+  const [games, setGames] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
+  const fetchGames = async () => {
+    if (!user) {
+      setGames([]);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setGames(data || []);
+    } catch (error) {
+      console.error('Error fetching games:', error);
+      setGames([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGames();
+  }, [user, refreshTrigger]);
+
   // Filter games based on view mode
-  const filteredGames = mockGames.filter((game) => {
+  const filteredGames = games.filter((game) => {
     switch (viewMode) {
       case 'backlog':
-        return !game.isCompleted;
+        return !game.is_completed && !game.is_currently_playing && !game.needs_purchase;
       case 'wishlist':
-        return game.needsPurchase;
+        return game.needs_purchase;
       case 'completed':
-        return game.isCompleted;
+        return game.is_completed;
       default:
         return true;
     }
   }).filter((game) => 
     game.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="text-muted-foreground">Loading games...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -150,22 +140,7 @@ export const GameLibrary = ({ viewMode, onEditGame }: GameLibraryProps) => {
 };
 
 interface GameListItemProps {
-  game: {
-    id: number;
-    title: string;
-    platform: string;
-    playthroughPlatform: string;
-    coverImage: string;
-    isCurrentlyPlaying: boolean;
-    isCompleted: boolean;
-    needsPurchase: boolean;
-    estimatedDuration: number;
-    actualPlaytime: number;
-    completionDate: string | null;
-    price: number | null;
-    comment: string;
-    tags: string[];
-  };
+  game: any;
   viewMode: ViewMode;
   onEdit: () => void;
 }
@@ -192,7 +167,7 @@ const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
       {/* Cover Image */}
       <div className="flex-shrink-0">
         <img 
-          src={game.coverImage} 
+          src={game.cover_image || "/placeholder.svg"} 
           alt={game.title}
           className="w-16 h-20 object-cover rounded border"
         />
@@ -208,12 +183,14 @@ const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
               
               {viewMode === 'backlog' && (
                 <>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {game.estimatedDuration}h
-                  </span>
-                  {game.actualPlaytime > 0 && (
-                    <span>Played: {game.actualPlaytime}h</span>
+                  {game.estimated_duration && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {game.estimated_duration}h
+                    </span>
+                  )}
+                  {game.actual_playtime > 0 && (
+                    <span>Played: {game.actual_playtime}h</span>
                   )}
                 </>
               )}
@@ -225,10 +202,10 @@ const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
                 </span>
               )}
               
-              {viewMode === 'completed' && game.completionDate && (
+              {viewMode === 'completed' && game.completion_date && (
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  {new Date(game.completionDate).toLocaleDateString()}
+                  {new Date(game.completion_date).toLocaleDateString()}
                 </span>
               )}
             </div>
@@ -238,32 +215,17 @@ const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
                 {game.comment}
               </p>
             )}
-            
-            {game.tags.length > 0 && (
-              <div className="flex gap-1 mt-2">
-                {game.tags.slice(0, 3).map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-                {game.tags.length > 3 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{game.tags.length - 3}
-                  </Badge>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Status Badges */}
           <div className="flex flex-col gap-1">
-            {game.isCurrentlyPlaying && (
+            {game.is_currently_playing && (
               <Badge className="bg-accent text-accent-foreground">
                 <Play className="h-3 w-3 mr-1" />
                 Playing
               </Badge>
             )}
-            {game.isCompleted && (
+            {game.is_completed && (
               <Badge className="bg-green-500 text-white">
                 <CheckCircle className="h-3 w-3 mr-1" />
                 Done
@@ -284,7 +246,7 @@ const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
           <Edit className="h-3 w-3" />
         </Button>
         
-        {viewMode === 'backlog' && !game.isCurrentlyPlaying && (
+        {viewMode === 'backlog' && !game.is_currently_playing && (
           <Button
             size="sm"
             variant="outline"
@@ -296,7 +258,7 @@ const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
           </Button>
         )}
         
-        {viewMode === 'backlog' && !game.isCompleted && (
+        {viewMode === 'backlog' && !game.is_completed && (
           <Button
             size="sm"
             variant="outline"

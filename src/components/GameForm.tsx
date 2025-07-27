@@ -10,14 +10,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { X, Upload, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface GameFormProps {
   game?: any;
   onClose: () => void;
+  onSave?: () => void;
 }
 
-export const GameForm = ({ game, onClose }: GameFormProps) => {
+export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: game?.title || "",
     platform: game?.platform || "",
@@ -39,18 +44,77 @@ export const GameForm = ({ game, onClose }: GameFormProps) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // TODO: Implement actual save functionality
-    console.log("Saving game:", formData);
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to save games.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
     
-    toast({
-      title: game ? "Game updated" : "Game added",
-      description: `${formData.title} has been ${game ? "updated" : "added"} successfully.`,
-    });
-    
-    onClose();
+    try {
+      const gameData = {
+        user_id: user.id,
+        title: formData.title,
+        platform: formData.platform || null,
+        playthrough_platform: formData.playthroughPlatform || null,
+        cover_image: formData.coverImage || null,
+        is_currently_playing: formData.isCurrentlyPlaying,
+        is_completed: formData.isCompleted,
+        needs_purchase: formData.needsPurchase,
+        estimated_duration: formData.estimatedDuration ? parseInt(formData.estimatedDuration) : null,
+        actual_playtime: formData.actualPlaytime ? parseInt(formData.actualPlaytime) : null,
+        completion_date: formData.completionDate || null,
+        price: formData.price ? parseFloat(formData.price) : null,
+        comment: formData.comment || null,
+        retro_achievement_url: formData.retroAchievementUrl || null,
+        how_long_to_beat_url: formData.howLongToBeatUrl || null,
+      };
+
+      let error;
+      
+      if (game?.id) {
+        // Update existing game
+        const { error: updateError } = await supabase
+          .from('games')
+          .update(gameData)
+          .eq('id', game.id);
+        error = updateError;
+      } else {
+        // Insert new game
+        const { error: insertError } = await supabase
+          .from('games')
+          .insert([gameData]);
+        error = insertError;
+      }
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: game ? "Game updated" : "Game added",
+        description: `${formData.title} has been ${game ? "updated" : "added"} successfully.`,
+      });
+      
+      onSave?.();
+      onClose();
+    } catch (error: any) {
+      console.error("Error saving game:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save game. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -311,8 +375,8 @@ export const GameForm = ({ game, onClose }: GameFormProps) => {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90">
-              {game ? "Update Game" : "Add Game"}
+            <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={isLoading}>
+              {isLoading ? "Saving..." : (game ? "Update Game" : "Add Game")}
             </Button>
           </DialogFooter>
         </form>

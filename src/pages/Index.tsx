@@ -11,6 +11,7 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('backlog');
   const [showGameForm, setShowGameForm] = useState(false);
   const [editingGame, setEditingGame] = useState<any>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const {
     user,
     loading,
@@ -33,6 +34,10 @@ const Index = () => {
   const handleCloseForm = () => {
     setShowGameForm(false);
     setEditingGame(null);
+  };
+
+  const handleGameSaved = () => {
+    setRefreshTrigger(prev => prev + 1);
   };
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
@@ -75,10 +80,10 @@ const Index = () => {
         </div>
 
         {/* Game Library */}
-        <GameLibrary viewMode={currentView} onEditGame={handleEditGame} />
+        <GameLibrary viewMode={currentView} onEditGame={handleEditGame} refreshTrigger={refreshTrigger} />
 
         {/* Game Form Modal */}
-        {showGameForm && <GameForm game={editingGame} onClose={handleCloseForm} />}
+        {showGameForm && <GameForm game={editingGame} onClose={handleCloseForm} onSave={handleGameSaved} />}
       </div>
     </div>;
 };
