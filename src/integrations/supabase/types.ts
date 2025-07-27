@@ -14,7 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      games: {
+        Row: {
+          actual_playtime: number | null
+          comment: string | null
+          completion_date: string | null
+          cover_image: string | null
+          created_at: string
+          estimated_duration: number | null
+          how_long_to_beat_url: string | null
+          id: string
+          is_completed: boolean | null
+          is_currently_playing: boolean | null
+          needs_purchase: boolean | null
+          platform: string | null
+          playthrough_platform: string | null
+          price: number | null
+          retro_achievement_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_playtime?: number | null
+          comment?: string | null
+          completion_date?: string | null
+          cover_image?: string | null
+          created_at?: string
+          estimated_duration?: number | null
+          how_long_to_beat_url?: string | null
+          id?: string
+          is_completed?: boolean | null
+          is_currently_playing?: boolean | null
+          needs_purchase?: boolean | null
+          platform?: string | null
+          playthrough_platform?: string | null
+          price?: number | null
+          retro_achievement_url?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_playtime?: number | null
+          comment?: string | null
+          completion_date?: string | null
+          cover_image?: string | null
+          created_at?: string
+          estimated_duration?: number | null
+          how_long_to_beat_url?: string | null
+          id?: string
+          is_completed?: boolean | null
+          is_currently_playing?: boolean | null
+          needs_purchase?: boolean | null
+          platform?: string | null
+          playthrough_platform?: string | null
+          price?: number | null
+          retro_achievement_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
