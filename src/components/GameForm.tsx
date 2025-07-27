@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,8 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [platforms, setPlatforms] = useState<any[]>([]);
+  const [storefronts, setStorefronts] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     title: game?.title || "",
     platform: game?.platform || "",
@@ -39,6 +41,32 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     retroAchievementUrl: game?.retroAchievementUrl || "",
     howLongToBeatUrl: game?.howLongToBeatUrl || "",
   });
+
+  // Fetch platforms and storefronts on component mount
+  useEffect(() => {
+    const fetchPlatforms = async () => {
+      try {
+        const { data: platformData } = await supabase
+          .from('platforms')
+          .select('*')
+          .eq('type', 'platform')
+          .order('name');
+        
+        const { data: storefrontData } = await supabase
+          .from('platforms')
+          .select('*')
+          .eq('type', 'storefront')
+          .order('name');
+
+        setPlatforms(platformData || []);
+        setStorefronts(storefrontData || []);
+      } catch (error) {
+        console.error('Error fetching platforms:', error);
+      }
+    };
+
+    fetchPlatforms();
+  }, []);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -170,11 +198,11 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                           <SelectValue placeholder="Select platform" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="PC">PC</SelectItem>
-                          <SelectItem value="PlayStation 5">PlayStation 5</SelectItem>
-                          <SelectItem value="Xbox Series X/S">Xbox Series X/S</SelectItem>
-                          <SelectItem value="Nintendo Switch">Nintendo Switch</SelectItem>
-                          <SelectItem value="Steam Deck">Steam Deck</SelectItem>
+                          {platforms.map((platform) => (
+                            <SelectItem key={platform.id} value={platform.name}>
+                              {platform.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -186,11 +214,11 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                           <SelectValue placeholder="Select platform" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Steam">Steam</SelectItem>
-                          <SelectItem value="Epic Games">Epic Games</SelectItem>
-                          <SelectItem value="GOG">GOG</SelectItem>
-                          <SelectItem value="PlayStation 5">PlayStation 5</SelectItem>
-                          <SelectItem value="Xbox Game Pass">Xbox Game Pass</SelectItem>
+                          {storefronts.map((storefront) => (
+                            <SelectItem key={storefront.id} value={storefront.name}>
+                              {storefront.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
