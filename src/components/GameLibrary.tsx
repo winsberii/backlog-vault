@@ -41,7 +41,11 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger }: GameLibrar
     try {
       const { data, error } = await supabase
         .from('games')
-        .select('*')
+        .select(`
+          *,
+          platform_info:platform(name),
+          playthrough_platform_info:playthrough_platform(name)
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -179,7 +183,7 @@ const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-lg truncate">{game.title}</h3>
             <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-              <span>Platform: <span className="text-foreground">{game.platform}</span></span>
+              <span>Platform: <span className="text-foreground">{game.platform_info?.name || 'Unknown'}</span></span>
               
               {viewMode === 'backlog' && (
                 <>

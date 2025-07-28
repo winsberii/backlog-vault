@@ -75,7 +75,22 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "games_platform_id_fkey"
+            columns: ["platform"]
+            isOneToOne: false
+            referencedRelation: "platforms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "games_playthrough_platform_id_fkey"
+            columns: ["playthrough_platform"]
+            isOneToOne: false
+            referencedRelation: "platforms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platforms: {
         Row: {

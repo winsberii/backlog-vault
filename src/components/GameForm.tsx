@@ -28,18 +28,18 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [formData, setFormData] = useState({
     title: game?.title || "",
     platform: game?.platform || "",
-    playthroughPlatform: game?.playthroughPlatform || "",
-    coverImage: game?.coverImage || "",
-    isCurrentlyPlaying: game?.isCurrentlyPlaying || false,
-    isCompleted: game?.isCompleted || false,
-    needsPurchase: game?.needsPurchase || false,
-    estimatedDuration: game?.estimatedDuration || "",
-    actualPlaytime: game?.actualPlaytime || "",
-    completionDate: game?.completionDate || "",
+    playthroughPlatform: game?.playthrough_platform || "",
+    coverImage: game?.cover_image || "",
+    isCurrentlyPlaying: game?.is_currently_playing || false,
+    isCompleted: game?.is_completed || false,
+    needsPurchase: game?.needs_purchase || false,
+    estimatedDuration: game?.estimated_duration || "",
+    actualPlaytime: game?.actual_playtime || "",
+    completionDate: game?.completion_date || "",
     price: game?.price || "",
     comment: game?.comment || "",
-    retroAchievementUrl: game?.retroAchievementUrl || "",
-    howLongToBeatUrl: game?.howLongToBeatUrl || "",
+    retroAchievementUrl: game?.retro_achievement_url || "",
+    howLongToBeatUrl: game?.how_long_to_beat_url || "",
   });
 
   // Fetch platforms and storefronts on component mount
@@ -199,7 +199,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         </SelectTrigger>
                         <SelectContent>
                           {platforms.map((platform) => (
-                            <SelectItem key={platform.id} value={platform.name}>
+                            <SelectItem key={platform.id} value={platform.id}>
                               {platform.name}
                             </SelectItem>
                           ))}
@@ -215,7 +215,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         </SelectTrigger>
                         <SelectContent>
                           {storefronts.map((storefront) => (
-                            <SelectItem key={storefront.id} value={storefront.name}>
+                            <SelectItem key={storefront.id} value={storefront.id}>
                               {storefront.name}
                             </SelectItem>
                           ))}
