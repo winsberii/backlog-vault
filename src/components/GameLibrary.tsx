@@ -13,10 +13,12 @@ import {
   Calendar, 
   DollarSign,
   Copy,
-  Trash2 
+  Trash2,
+  Square
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface GameLibraryProps {
   viewMode: ViewMode;
@@ -70,7 +72,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger }: GameLibrar
   const filteredGames = games.filter((game) => {
     switch (viewMode) {
       case 'backlog':
-        return !game.is_completed && !game.is_currently_playing && !game.needs_purchase;
+        return !game.is_completed && !game.needs_purchase;
       case 'wishlist':
         return game.needs_purchase;
       case 'completed':
@@ -121,6 +123,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger }: GameLibrar
             game={game}
             viewMode={viewMode}
             onEdit={() => onEditGame(game)}
+            onRefresh={fetchGames}
           />
         ))}
       </div>
@@ -147,9 +150,12 @@ interface GameListItemProps {
   game: any;
   viewMode: ViewMode;
   onEdit: () => void;
+  onRefresh: () => Promise<void>;
 }
 
-const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
+const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) => {
+  const { toast } = useToast();
+  
   const handleClone = () => {
     console.log("Clone game:", game.id);
   };
@@ -158,12 +164,62 @@ const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
     console.log("Delete game:", game.id);
   };
 
-  const handleToggleCurrentlyPlaying = () => {
-    console.log("Toggle currently playing:", game.id);
+  const handleToggleCurrentlyPlaying = async () => {
+    try {
+      const { error } = await supabase
+        .from('games')
+        .update({ is_currently_playing: !game.is_currently_playing })
+        .eq('id', game.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: game.is_currently_playing ? "Stopped playing" : "Now playing",
+        description: `${game.title} ${game.is_currently_playing ? 'removed from' : 'marked as'} currently playing.`,
+      });
+
+      await onRefresh();
+    } catch (error: any) {
+      console.error("Error updating game status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update game status. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleMarkCompleted = () => {
-    console.log("Mark completed:", game.id);
+  const handleMarkCompleted = async () => {
+    try {
+      const { error } = await supabase
+        .from('games')
+        .update({ 
+          is_completed: true,
+          is_currently_playing: false, // Can't be playing if completed
+          completion_date: new Date().toISOString().split('T')[0] // Today's date
+        })
+        .eq('id', game.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Game completed!",
+        description: `${game.title} has been marked as completed.`,
+      });
+
+      await onRefresh();
+    } catch (error: any) {
+      console.error("Error marking game as completed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to mark game as completed. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -250,6 +306,7 @@ const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
           <Edit className="h-3 w-3" />
         </Button>
         
+        {/* Currently Playing Toggle Button */}
         {viewMode === 'backlog' && !game.is_currently_playing && (
           <Button
             size="sm"
@@ -259,6 +316,32 @@ const GameListItem = ({ game, viewMode, onEdit }: GameListItemProps) => {
             title="Mark as currently playing"
           >
             <Play className="h-3 w-3" />
+          </Button>
+        )}
+        
+        {/* Stop Playing Button */}
+        {viewMode === 'backlog' && game.is_currently_playing && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleToggleCurrentlyPlaying}
+            className="border-border hover:bg-secondary/50"
+            title="Stop playing"
+          >
+            <Square className="h-3 w-3" />
+          </Button>
+        )}
+        
+        {/* Show in Currently Playing section too */}
+        {(viewMode === 'wishlist' || viewMode === 'completed') && game.is_currently_playing && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleToggleCurrentlyPlaying}
+            className="border-border hover:bg-secondary/50"
+            title="Stop playing"
+          >
+            <Square className="h-3 w-3" />
           </Button>
         )}
         
