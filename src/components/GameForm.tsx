@@ -211,7 +211,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                       <Label htmlFor="playthroughPlatform">Playthrough Platform</Label>
                       <Select value={formData.playthroughPlatform} onValueChange={(value) => handleInputChange("playthroughPlatform", value)}>
                         <SelectTrigger className="bg-background border-border">
-                          <SelectValue placeholder="Select platform" />
+                          <SelectValue placeholder="Select storefront" />
                         </SelectTrigger>
                         <SelectContent>
                           {storefronts.map((storefront) => (
