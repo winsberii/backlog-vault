@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, Calendar } from "lucide-react";
+import { X, Upload, Calendar, Loader2 } from "lucide-react";
+import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -23,6 +24,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [storefronts, setStorefronts] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -145,12 +147,62 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // TODO: Implement actual file upload
-      const imageUrl = URL.createObjectURL(file);
-      handleInputChange("coverImage", imageUrl);
+    if (!file) return;
+
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to upload images.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const result = await uploadCoverImage(file);
+      
+      if (result.success && result.url) {
+        handleInputChange("coverImage", result.url);
+        toast({
+          title: "Success",
+          description: "Cover image uploaded successfully!",
+        });
+      } else {
+        toast({
+          title: "Upload Failed",
+          description: result.error || "Failed to upload image. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred during upload.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      // Clear the file input
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (formData.coverImage) {
+      // Try to delete from storage if it's a Supabase URL
+      if (formData.coverImage.includes('supabase')) {
+        await deleteCoverImage(formData.coverImage);
+      }
+      handleInputChange("coverImage", "");
+      toast({
+        title: "Image removed",
+        description: "Cover image has been removed.",
+      });
     }
   };
 
@@ -228,24 +280,48 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                       <div className="flex gap-2">
                         <Input
                           type="file"
-                          accept="image/*"
+                          accept="image/jpeg,image/jpg,image/png,image/webp"
                           onChange={handleFileUpload}
                           className="bg-background border-border"
+                          disabled={isUploading}
                         />
-                        <Button type="button" variant="outline" size="icon">
-                          <Upload className="h-4 w-4" />
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="icon"
+                          disabled={isUploading}
+                        >
+                          {isUploading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
+                      {isUploading && (
+                        <p className="text-sm text-muted-foreground">Uploading image...</p>
+                      )}
                     </div>
                   </div>
 
                   {formData.coverImage && (
-                    <div className="mt-4">
-                      <img 
-                        src={formData.coverImage} 
-                        alt="Cover preview" 
-                        className="w-32 h-48 object-cover rounded border"
-                      />
+                    <div className="mt-4 space-y-2">
+                      <div className="relative inline-block">
+                        <img 
+                          src={formData.coverImage} 
+                          alt="Cover preview" 
+                          className="w-32 h-48 object-cover rounded border"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={handleRemoveImage}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
