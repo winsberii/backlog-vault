@@ -310,7 +310,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         <img 
                           src={formData.coverImage} 
                           alt="Cover preview" 
-                          className="w-32 h-48 object-cover rounded border"
+                          className="w-32 h-48 object-contain rounded border bg-muted"
                         />
                         <Button
                           type="button"
