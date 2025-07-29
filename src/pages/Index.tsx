@@ -2,14 +2,16 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { GameLibrary } from "@/components/GameLibrary";
 import { GameForm } from "@/components/GameForm";
+import { ImportExport } from "@/components/ImportExport";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 export type ViewMode = 'backlog' | 'wishlist' | 'completed';
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('backlog');
   const [showGameForm, setShowGameForm] = useState(false);
+  const [showImportExport, setShowImportExport] = useState(false);
   const [editingGame, setEditingGame] = useState<any>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const {
@@ -37,6 +39,10 @@ const Index = () => {
   };
 
   const handleGameSaved = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleImportComplete = () => {
     setRefreshTrigger(prev => prev + 1);
   };
   if (loading) {
@@ -73,10 +79,20 @@ const Index = () => {
           <h2 className="text-2xl font-semibold capitalize">
             {currentView === 'backlog' ? 'My Backlog' : currentView === 'wishlist' ? 'Wishlist' : 'Completed Games'}
           </h2>
-          <Button onClick={handleAddGame} className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-hover transition-all duration-300">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Game
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowImportExport(true)}
+              variant="outline"
+              className="gap-2"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Import/Export
+            </Button>
+            <Button onClick={handleAddGame} className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-hover transition-all duration-300">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Game
+            </Button>
+          </div>
         </div>
 
         {/* Game Library */}
@@ -84,6 +100,15 @@ const Index = () => {
 
         {/* Game Form Modal */}
         {showGameForm && <GameForm game={editingGame} onClose={handleCloseForm} onSave={handleGameSaved} />}
+        
+        {/* Import/Export Modal */}
+        {showImportExport && (
+          <ImportExport
+            isOpen={showImportExport}
+            onClose={() => setShowImportExport(false)}
+            onImportComplete={handleImportComplete}
+          />
+        )}
       </div>
     </div>;
 };
