@@ -26,7 +26,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [platforms, setPlatforms] = useState<any[]>([]);
-  const [storefronts, setStorefronts] = useState<any[]>([]);
+  const [activePlatforms, setActivePlatforms] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     title: game?.title || "",
     platform: game?.platform || "",
@@ -44,24 +44,25 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     howLongToBeatUrl: game?.how_long_to_beat_url || "",
   });
 
-  // Fetch platforms and storefronts on component mount
+  // Fetch platforms on component mount
   useEffect(() => {
     const fetchPlatforms = async () => {
       try {
-        const { data: platformData } = await supabase
+        // Fetch all platforms for main platform selection
+        const { data: allPlatforms } = await supabase
           .from('platforms')
           .select('*')
-          .eq('type', 'platform')
           .order('name');
         
-        const { data: storefrontData } = await supabase
+        // Fetch only active platforms for playthrough platform selection
+        const { data: activePlatformsData } = await supabase
           .from('platforms')
           .select('*')
-          .eq('type', 'storefront')
+          .eq('active', true)
           .order('name');
 
-        setPlatforms(platformData || []);
-        setStorefronts(storefrontData || []);
+        setPlatforms(allPlatforms || []);
+        setActivePlatforms(activePlatformsData || []);
       } catch (error) {
         console.error('Error fetching platforms:', error);
       }
@@ -263,12 +264,12 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                       <Label htmlFor="playthroughPlatform">Playthrough Platform</Label>
                       <Select value={formData.playthroughPlatform} onValueChange={(value) => handleInputChange("playthroughPlatform", value)}>
                         <SelectTrigger className="bg-background border-border">
-                          <SelectValue placeholder="Select storefront" />
+                          <SelectValue placeholder="Select playthrough platform" />
                         </SelectTrigger>
                         <SelectContent>
-                          {storefronts.map((storefront) => (
-                            <SelectItem key={storefront.id} value={storefront.id}>
-                              {storefront.name}
+                          {activePlatforms.map((platform) => (
+                            <SelectItem key={platform.id} value={platform.id}>
+                              {platform.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
