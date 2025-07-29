@@ -229,7 +229,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         <img 
           src={game.cover_image || "/placeholder.svg"} 
           alt={game.title}
-          className="w-16 h-20 object-cover rounded border"
+          className="w-16 h-20 object-contain bg-muted rounded border"
         />
       </div>
 
