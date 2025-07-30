@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, Calendar, Loader2 } from "lucide-react";
+import { X, Upload, Calendar, Loader2, Download } from "lucide-react";
 import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +25,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isFetchingHLTB, setIsFetchingHLTB] = useState(false);
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [activePlatforms, setActivePlatforms] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -204,6 +205,59 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
         title: "Image removed",
         description: "Cover image has been removed.",
       });
+    }
+  };
+
+  const handleFetchHLTBData = async () => {
+    if (!formData.howLongToBeatUrl) {
+      toast({
+        title: "Error",
+        description: "Please enter a HowLongToBeat URL first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsFetchingHLTB(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-hltb-data', {
+        body: { url: formData.howLongToBeatUrl }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        const { coverImage, estimatedDuration } = data.data;
+        
+        if (coverImage) {
+          handleInputChange("coverImage", coverImage);
+        }
+        
+        if (estimatedDuration > 0) {
+          handleInputChange("estimatedDuration", estimatedDuration.toString());
+        }
+
+        toast({
+          title: "Success",
+          description: `Fetched data from HowLongToBeat${coverImage ? ' (cover image)' : ''}${estimatedDuration > 0 ? ` (${estimatedDuration}h duration)` : ''}`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to fetch data from HowLongToBeat",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error fetching HLTB data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch data from HowLongToBeat. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingHLTB(false);
     }
   };
 
@@ -462,14 +516,33 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
                   <div className="space-y-2">
                     <Label htmlFor="howLongToBeatUrl">HowLongToBeat URL</Label>
-                    <Input
-                      id="howLongToBeatUrl"
-                      type="url"
-                      value={formData.howLongToBeatUrl}
-                      onChange={(e) => handleInputChange("howLongToBeatUrl", e.target.value)}
-                      placeholder="https://howlongtobeat.com/game/..."
-                      className="bg-background border-border"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="howLongToBeatUrl"
+                        type="url"
+                        value={formData.howLongToBeatUrl}
+                        onChange={(e) => handleInputChange("howLongToBeatUrl", e.target.value)}
+                        placeholder="https://howlongtobeat.com/game/..."
+                        className="bg-background border-border"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleFetchHLTBData}
+                        disabled={isFetchingHLTB || !formData.howLongToBeatUrl}
+                        title="Fetch cover art and duration from HowLongToBeat"
+                      >
+                        {isFetchingHLTB ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    {isFetchingHLTB && (
+                      <p className="text-sm text-muted-foreground">Fetching data from HowLongToBeat...</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
