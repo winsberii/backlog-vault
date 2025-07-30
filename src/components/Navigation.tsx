@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ViewMode } from "@/pages/Index";
-import { Gamepad2, Heart, Trophy } from "lucide-react";
+import { Gamepad2, Heart, Trophy, Filter } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
 interface NavigationProps {
@@ -24,6 +24,11 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
       key: 'completed' as ViewMode,
       label: 'Completed',
       icon: Trophy,
+    },
+    {
+      key: 'tosort' as ViewMode,
+      label: 'To Sort',
+      icon: Filter,
     },
   ];
 

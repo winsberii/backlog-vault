@@ -7,7 +7,7 @@ import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Plus, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-export type ViewMode = 'backlog' | 'wishlist' | 'completed';
+export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort';
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('backlog');
   const [showGameForm, setShowGameForm] = useState(false);

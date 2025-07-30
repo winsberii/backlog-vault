@@ -43,6 +43,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     comment: game?.comment || "",
     retroAchievementUrl: game?.retro_achievement_url || "",
     howLongToBeatUrl: game?.how_long_to_beat_url || "",
+    tosort: game?.tosort || false,
   });
 
   // Fetch platforms on component mount
@@ -107,6 +108,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
         comment: formData.comment || null,
         retro_achievement_url: formData.retroAchievementUrl || null,
         how_long_to_beat_url: formData.howLongToBeatUrl || null,
+        tosort: formData.tosort,
       };
 
       let error;
@@ -414,6 +416,15 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         id="needsPurchase"
                         checked={formData.needsPurchase}
                         onCheckedChange={(checked) => handleInputChange("needsPurchase", checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="tosort">To Sort</Label>
+                      <Switch
+                        id="tosort"
+                        checked={formData.tosort}
+                        onCheckedChange={(checked) => handleInputChange("tosort", checked)}
                       />
                     </div>
                   </div>

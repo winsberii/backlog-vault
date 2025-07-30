@@ -72,11 +72,13 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger }: GameLibrar
   const filteredGames = games.filter((game) => {
     switch (viewMode) {
       case 'backlog':
-        return !game.is_completed && !game.needs_purchase;
+        return !game.is_completed && !game.needs_purchase && !game.tosort;
       case 'wishlist':
-        return game.needs_purchase;
+        return game.needs_purchase && !game.tosort;
       case 'completed':
-        return game.is_completed;
+        return game.is_completed && !game.tosort;
+      case 'tosort':
+        return game.tosort;
       default:
         return true;
     }

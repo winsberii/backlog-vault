@@ -32,6 +32,7 @@ export type Database = {
           price: number | null
           retro_achievement_url: string | null
           title: string
+          tosort: boolean | null
           updated_at: string
           user_id: string
         }
@@ -52,6 +53,7 @@ export type Database = {
           price?: number | null
           retro_achievement_url?: string | null
           title: string
+          tosort?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -72,6 +74,7 @@ export type Database = {
           price?: number | null
           retro_achievement_url?: string | null
           title?: string
+          tosort?: boolean | null
           updated_at?: string
           user_id?: string
         }
