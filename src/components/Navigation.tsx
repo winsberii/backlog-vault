@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ViewMode } from "@/pages/Index";
 import { Gamepad2, Heart, Trophy } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface NavigationProps {
   currentView: ViewMode;
@@ -27,8 +28,9 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
   ];
 
   return (
-    <div className="flex space-x-2 mb-8 bg-card p-2 rounded-lg shadow-game-card">
-      {navItems.map((item) => {
+    <div className="flex items-center justify-between mb-8 bg-card p-2 rounded-lg shadow-game-card">
+      <div className="flex space-x-2">
+        {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = currentView === item.key;
         
@@ -48,6 +50,8 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
           </Button>
         );
       })}
+      </div>
+      <ThemeToggle />
     </div>
   );
 };
