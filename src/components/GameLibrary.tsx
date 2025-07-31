@@ -94,6 +94,23 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger }: GameLibrar
       // Secondary sort: Title (ascending) - alphabetical
       return a.title.localeCompare(b.title);
     }
+    // Special sorting for completed view
+    if (viewMode === 'completed') {
+      // Primary sort: Completion Date (descending) - most recent first
+      if (a.completion_date && b.completion_date) {
+        const dateA = new Date(a.completion_date).getTime();
+        const dateB = new Date(b.completion_date).getTime();
+        if (dateA !== dateB) {
+          return dateB - dateA;
+        }
+      } else if (a.completion_date && !b.completion_date) {
+        return -1;
+      } else if (!a.completion_date && b.completion_date) {
+        return 1;
+      }
+      // Secondary sort: Title (ascending) - alphabetical
+      return a.title.localeCompare(b.title);
+    }
     // Default sorting for other views (by creation date)
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
