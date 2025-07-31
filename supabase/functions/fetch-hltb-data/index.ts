@@ -6,16 +6,79 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+
+async function downloadAndSaveImage(imageUrl: string, userId: string, gameTitle: string): Promise<string | null> {
+  try {
+    console.log('Downloading image from:', imageUrl)
+    
+    // Fetch the image
+    const imageResponse = await fetch(imageUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    })
+
+    if (!imageResponse.ok) {
+      console.error('Failed to download image:', imageResponse.status)
+      return null
+    }
+
+    // Get the image data
+    const imageBlob = await imageResponse.blob()
+    const imageBuffer = await imageBlob.arrayBuffer()
+    
+    // Generate a filename
+    const timestamp = Date.now()
+    const fileExtension = imageUrl.split('.').pop()?.split('?')[0] || 'jpg'
+    const fileName = `${timestamp}_${gameTitle.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50)}.${fileExtension}`
+    const filePath = `${userId}/${fileName}`
+
+    console.log('Uploading image to storage:', filePath)
+
+    // Upload to Supabase storage
+    const { data, error } = await supabase.storage
+      .from('cover-images')
+      .upload(filePath, imageBuffer, {
+        contentType: imageBlob.type || 'image/jpeg',
+        cacheControl: '3600'
+      })
+
+    if (error) {
+      console.error('Error uploading to storage:', error)
+      return null
+    }
+
+    // Get the public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('cover-images')
+      .getPublicUrl(filePath)
+
+    console.log('Image saved to storage:', publicUrl)
+    return publicUrl
+
+  } catch (error) {
+    console.error('Error downloading and saving image:', error)
+    return null
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { url } = await req.json()
+    const { url, userId, gameTitle } = await req.json()
     
     if (!url || !url.includes('howlongtobeat.com')) {
       throw new Error('Invalid HowLongToBeat URL')
+    }
+
+    if (!userId) {
+      throw new Error('User ID is required')
     }
 
     console.log('Fetching data from:', url)
@@ -34,18 +97,18 @@ serve(async (req) => {
     const html = await response.text()
     
     // Extract cover image URL
-    let coverImage = ''
+    let coverImageUrl = ''
     const coverImageMatch = html.match(/<img[^>]+class="[^"]*GameHeader_game_image[^"]*"[^>]+src="([^"]+)"/i) ||
                            html.match(/<img[^>]+src="([^"]+)"[^>]*class="[^"]*GameHeader_game_image[^"]*"/i) ||
                            html.match(/<div[^>]+class="[^"]*game_image[^"]*"[^>]*>\s*<img[^>]+src="([^"]+)"/i)
     
     if (coverImageMatch) {
-      coverImage = coverImageMatch[1]
+      coverImageUrl = coverImageMatch[1]
       // Convert relative URLs to absolute
-      if (coverImage.startsWith('/')) {
-        coverImage = 'https://howlongtobeat.com' + coverImage
-      } else if (coverImage.startsWith('//')) {
-        coverImage = 'https:' + coverImage
+      if (coverImageUrl.startsWith('/')) {
+        coverImageUrl = 'https://howlongtobeat.com' + coverImageUrl
+      } else if (coverImageUrl.startsWith('//')) {
+        coverImageUrl = 'https:' + coverImageUrl
       }
     }
 
@@ -77,13 +140,19 @@ serve(async (req) => {
       }
     }
 
-    console.log('Extracted data:', { coverImage, mainStoryHours })
+    // Download and save cover image to Supabase storage
+    let savedCoverImage = null
+    if (coverImageUrl) {
+      savedCoverImage = await downloadAndSaveImage(coverImageUrl, userId, gameTitle || 'game')
+    }
+
+    console.log('Extracted data:', { originalCoverImage: coverImageUrl, savedCoverImage, mainStoryHours })
 
     return new Response(
       JSON.stringify({
         success: true,
         data: {
-          coverImage,
+          coverImage: savedCoverImage || coverImageUrl, // Return saved image URL or fallback to original
           estimatedDuration: Math.round(mainStoryHours)
         }
       }),
