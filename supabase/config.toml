@@ -1,1 +1,4 @@
 project_id = "uaaixaooootqtwhyltxd"
+
+[functions.add-to-sort-list]
+verify_jwt = false
