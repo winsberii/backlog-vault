@@ -84,7 +84,19 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger }: GameLibrar
     }
   }).filter((game) => 
     game.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a, b) => {
+    // Special sorting for backlog view
+    if (viewMode === 'backlog') {
+      // Primary sort: Currently Playing (descending) - playing games first
+      if (a.is_currently_playing !== b.is_currently_playing) {
+        return b.is_currently_playing ? 1 : -1;
+      }
+      // Secondary sort: Title (ascending) - alphabetical
+      return a.title.localeCompare(b.title);
+    }
+    // Default sorting for other views (by creation date)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
 
   if (isLoading) {
     return (
