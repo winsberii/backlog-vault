@@ -105,6 +105,11 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger }: GameLibrar
       // Secondary sort: Title (ascending) - alphabetical
       return a.title.localeCompare(b.title);
     }
+    // Special sorting for wishlist view
+    if (viewMode === 'wishlist') {
+      // Primary sort: Title (ascending) - alphabetical
+      return a.title.localeCompare(b.title);
+    }
     // Special sorting for completed view
     if (viewMode === 'completed') {
       // Primary sort: Completion Date (descending) - most recent first
