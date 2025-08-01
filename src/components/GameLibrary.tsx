@@ -4,6 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { 
   Search, 
   Filter, 
   Edit, 
@@ -191,8 +202,31 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
     console.log("Clone game:", game.id);
   };
 
-  const handleDelete = () => {
-    console.log("Delete game:", game.id);
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('games')
+        .delete()
+        .eq('id', game.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Game deleted",
+        description: `${game.title} has been deleted from your library.`,
+      });
+
+      await onRefresh();
+    } catch (error: any) {
+      console.error("Error deleting game:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete game. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleToggleCurrentlyPlaying = async () => {
@@ -398,15 +432,35 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
           <Copy className="h-3 w-3" />
         </Button>
         
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleDelete}
-          className="border-border hover:bg-destructive hover:text-destructive-foreground"
-          title="Delete game"
-        >
-          <Trash2 className="h-3 w-3" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              title="Delete game"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Game</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{game.title}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

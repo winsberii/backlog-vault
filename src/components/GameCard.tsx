@@ -1,6 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ViewMode } from "@/pages/Index";
 import { 
   Play, 
@@ -32,17 +43,17 @@ interface GameCardProps {
   };
   viewMode: ViewMode;
   onEdit: () => void;
+  onDelete: (gameId: number) => void;
 }
 
-export const GameCard = ({ game, viewMode, onEdit }: GameCardProps) => {
+export const GameCard = ({ game, viewMode, onEdit, onDelete }: GameCardProps) => {
   const handleClone = () => {
     // TODO: Implement clone functionality
     console.log("Clone game:", game.id);
   };
 
   const handleDelete = () => {
-    // TODO: Implement delete functionality with confirmation
-    console.log("Delete game:", game.id);
+    onDelete(game.id);
   };
 
   const handleToggleCurrentlyPlaying = () => {
@@ -180,6 +191,35 @@ export const GameCard = ({ game, viewMode, onEdit }: GameCardProps) => {
             <CheckCircle className="h-3 w-3" />
           </Button>
         )}
+        
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Game</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{game.title}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardFooter>
     </Card>
   );
