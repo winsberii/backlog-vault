@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       games: {
         Row: {
+          achievements: number | null
           actual_playtime: number | null
           comment: string | null
           completion_date: string | null
@@ -37,6 +38,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          achievements?: number | null
           actual_playtime?: number | null
           comment?: string | null
           completion_date?: string | null
@@ -58,6 +60,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          achievements?: number | null
           actual_playtime?: number | null
           comment?: string | null
           completion_date?: string | null

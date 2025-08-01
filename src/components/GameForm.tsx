@@ -41,6 +41,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     completionDate: game?.completion_date || "",
     price: game?.price || "",
     comment: game?.comment || "",
+    achievements: game?.achievements || "",
     retroAchievementUrl: game?.retro_achievement_url || "",
     howLongToBeatUrl: game?.how_long_to_beat_url || "",
     tosort: game?.tosort || false,
@@ -106,6 +107,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
         completion_date: formData.completionDate || null,
         price: formData.price ? parseFloat(formData.price) : null,
         comment: formData.comment || null,
+        achievements: formData.achievements ? parseInt(formData.achievements) : null,
         retro_achievement_url: formData.retroAchievementUrl || null,
         how_long_to_beat_url: formData.howLongToBeatUrl || null,
         tosort: formData.tosort,
@@ -503,6 +505,18 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         className="bg-background border-border"
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="achievements">Number of Achievements</Label>
+                    <Input
+                      id="achievements"
+                      type="number"
+                      value={formData.achievements}
+                      onChange={(e) => handleInputChange("achievements", e.target.value)}
+                      placeholder="0"
+                      className="bg-background border-border"
+                    />
                   </div>
 
                   <div className="space-y-2">
