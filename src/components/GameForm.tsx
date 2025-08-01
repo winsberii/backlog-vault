@@ -220,11 +220,24 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
       return;
     }
 
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to fetch data.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsFetchingHLTB(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('fetch-hltb-data', {
-        body: { url: formData.howLongToBeatUrl }
+        body: { 
+          url: formData.howLongToBeatUrl,
+          userId: user.id,
+          gameTitle: formData.title || "Unknown Game"
+        }
       });
 
       if (error) throw error;
