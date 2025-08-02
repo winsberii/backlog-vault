@@ -163,7 +163,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger }: GameLibrar
       </div>
 
       {/* Games List */}
-      <div className="space-y-2">
+      <div className="space-y-1">
         {filteredGames.map((game) => (
           <GameListItem
             key={game.id}
@@ -293,71 +293,76 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
   };
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:bg-secondary/20 transition-colors group">
-      {/* Cover Image */}
+    <div className="flex items-center gap-2 p-2 bg-card border border-border rounded hover:bg-secondary/20 transition-colors group">
+      {/* Cover Image - 50% smaller */}
       <div className="flex-shrink-0">
         <img 
           src={game.cover_image || "/placeholder.svg"} 
           alt={game.title}
-          className="w-16 h-20 object-contain bg-muted rounded border"
+          className="w-8 h-10 object-contain bg-muted rounded"
         />
       </div>
 
-      {/* Game Info */}
+      {/* Game Info - Denser Layout */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-lg truncate">{game.title}</h3>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-              <span>Platform: <span className="text-foreground">{game.platform_info?.name || 'Unknown'}</span></span>
-              
+            {/* Title and platform on same line */}
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm truncate">{game.title}</h3>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">{game.platform_info?.name}</span>
+            </div>
+            
+            {/* Compact info line */}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
               {viewMode === 'backlog' && (
                 <>
                   {game.estimated_duration && (
                     <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
+                      <Clock className="h-2.5 w-2.5" />
                       {game.estimated_duration}h
                     </span>
                   )}
                   {game.actual_playtime > 0 && (
                     <span>Played: {game.actual_playtime}h</span>
                   )}
+                  {game.achievements > 0 && (
+                    <span>{game.achievements} achievements</span>
+                  )}
                 </>
               )}
               
               {viewMode === 'wishlist' && game.price && (
                 <span className="flex items-center gap-1">
-                  <DollarSign className="h-3 w-3" />
+                  <DollarSign className="h-2.5 w-2.5" />
                   ${game.price}
                 </span>
               )}
               
               {viewMode === 'completed' && game.completion_date && (
                 <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
+                  <Calendar className="h-2.5 w-2.5" />
                   {new Date(game.completion_date).toLocaleDateString()}
                 </span>
               )}
+              
+              {game.comment && (
+                <span className="truncate max-w-48">{game.comment}</span>
+              )}
             </div>
-            
-            {game.comment && (
-              <p className="text-sm text-muted-foreground mt-2 line-clamp-1">
-                {game.comment}
-              </p>
-            )}
           </div>
 
-          {/* Status Badges */}
-          <div className="flex flex-col gap-1">
+          {/* Compact Status Badges */}
+          <div className="flex items-center gap-1">
             {game.is_currently_playing && (
-              <Badge className="bg-accent text-accent-foreground">
-                <Play className="h-3 w-3 mr-1" />
+              <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                <Play className="h-2.5 w-2.5 mr-1" />
                 Playing
               </Badge>
             )}
             {game.is_completed && (
-              <Badge className="bg-green-500 text-white">
-                <CheckCircle className="h-3 w-3 mr-1" />
+              <Badge variant="secondary" className="text-xs px-1.5 py-0 bg-green-100 text-green-800">
+                <CheckCircle className="h-2.5 w-2.5 mr-1" />
                 Done
               </Badge>
             )}
@@ -365,50 +370,47 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex-shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Compact Actions */}
+      <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           size="sm"
-          variant="outline"
+          variant="ghost"
           onClick={onEdit}
-          className="border-border hover:bg-secondary/50"
+          className="h-6 w-6 p-0"
         >
           <Edit className="h-3 w-3" />
         </Button>
         
-        {/* Currently Playing Toggle Button */}
         {viewMode === 'backlog' && !game.is_currently_playing && (
           <Button
             size="sm"
-            variant="outline"
+            variant="ghost"
             onClick={handleToggleCurrentlyPlaying}
-            className="border-border hover:bg-secondary/50"
+            className="h-6 w-6 p-0"
             title="Mark as currently playing"
           >
             <Play className="h-3 w-3" />
           </Button>
         )}
         
-        {/* Stop Playing Button */}
         {viewMode === 'backlog' && game.is_currently_playing && (
           <Button
             size="sm"
-            variant="outline"
+            variant="ghost"
             onClick={handleToggleCurrentlyPlaying}
-            className="border-border hover:bg-secondary/50"
+            className="h-6 w-6 p-0"
             title="Stop playing"
           >
             <Square className="h-3 w-3" />
           </Button>
         )}
         
-        {/* Show in Currently Playing section too */}
         {(viewMode === 'wishlist' || viewMode === 'completed') && game.is_currently_playing && (
           <Button
             size="sm"
-            variant="outline"
+            variant="ghost"
             onClick={handleToggleCurrentlyPlaying}
-            className="border-border hover:bg-secondary/50"
+            className="h-6 w-6 p-0"
             title="Stop playing"
           >
             <Square className="h-3 w-3" />
@@ -418,9 +420,9 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         {viewMode === 'backlog' && !game.is_completed && (
           <Button
             size="sm"
-            variant="outline"
+            variant="ghost"
             onClick={handleMarkCompleted}
-            className="border-border hover:bg-secondary/50"
+            className="h-6 w-6 p-0"
             title="Mark as completed"
           >
             <CheckCircle className="h-3 w-3" />
@@ -429,9 +431,9 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         
         <Button
           size="sm"
-          variant="outline"
+          variant="ghost"
           onClick={handleClone}
-          className="border-border hover:bg-secondary/50"
+          className="h-6 w-6 p-0"
           title="Clone game"
         >
           <Copy className="h-3 w-3" />
@@ -441,8 +443,8 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
           <AlertDialogTrigger asChild>
             <Button
               size="sm"
-              variant="outline"
-              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              variant="ghost"
+              className="h-6 w-6 p-0 text-destructive hover:bg-destructive hover:text-destructive-foreground"
               title="Delete game"
             >
               <Trash2 className="h-3 w-3" />
