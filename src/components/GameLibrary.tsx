@@ -294,12 +294,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
 
   return (
     <div className="flex items-center gap-2 p-2 bg-card border border-border rounded hover:bg-secondary/20 transition-colors group">
-      {/* Cover Image - 50% smaller */}
+      {/* Cover Image - 50% smaller with hover effect */}
       <div className="flex-shrink-0">
         <img 
           src={game.cover_image || "/placeholder.svg"} 
           alt={game.title}
-          className="w-8 h-10 object-contain bg-muted rounded"
+          className="w-8 h-10 object-contain bg-muted rounded transition-transform duration-200 hover:scale-150 hover:z-10 relative"
         />
       </div>
 
