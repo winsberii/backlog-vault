@@ -299,7 +299,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         <img 
           src={game.cover_image || "/placeholder.svg"} 
           alt={game.title}
-          className="w-8 h-10 object-contain bg-muted rounded transition-transform duration-200 hover:scale-150 hover:z-10 relative"
+          className="w-8 h-10 object-contain bg-muted rounded transition-transform duration-200 hover:scale-[4] hover:z-10 relative"
         />
       </div>
 
