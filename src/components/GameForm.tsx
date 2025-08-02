@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, Calendar, Loader2, Download } from "lucide-react";
+import { X, Upload, Calendar, Loader2, Download, Search } from "lucide-react";
 import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +26,9 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isFetchingHLTB, setIsFetchingHLTB] = useState(false);
+  const [isSearchingHLTB, setIsSearchingHLTB] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchDialog, setShowSearchDialog] = useState(false);
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [activePlatforms, setActivePlatforms] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -276,6 +279,57 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     } finally {
       setIsFetchingHLTB(false);
     }
+  };
+
+  const handleSearchHLTB = async () => {
+    if (!formData.title) {
+      toast({
+        title: "Error",
+        description: "Please enter a game title first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSearchingHLTB(true);
+    setSearchResults([]);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('search-hltb', {
+        body: { gameTitle: formData.title }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.games.length > 0) {
+        setSearchResults(data.games);
+        setShowSearchDialog(true);
+      } else {
+        toast({
+          title: "No results found",
+          description: "No games found on HowLongToBeat. Try a different search term.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error searching HLTB:", error);
+      toast({
+        title: "Error",
+        description: "Failed to search HowLongToBeat. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearchingHLTB(false);
+    }
+  };
+
+  const handleSelectSearchResult = (selectedGame: any) => {
+    handleInputChange("howLongToBeatUrl", selectedGame.url);
+    setShowSearchDialog(false);
+    toast({
+      title: "URL Selected",
+      description: `HowLongToBeat URL set for "${selectedGame.title}"`,
+    });
   };
 
   return (
@@ -552,36 +606,53 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="howLongToBeatUrl">HowLongToBeat URL</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="howLongToBeatUrl"
-                        type="url"
-                        value={formData.howLongToBeatUrl}
-                        onChange={(e) => handleInputChange("howLongToBeatUrl", e.target.value)}
-                        placeholder="https://howlongtobeat.com/game/..."
-                        className="bg-background border-border"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={handleFetchHLTBData}
-                        disabled={isFetchingHLTB || !formData.howLongToBeatUrl}
-                        title="Fetch cover art and duration from HowLongToBeat"
-                      >
-                        {isFetchingHLTB ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Download className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    {isFetchingHLTB && (
-                      <p className="text-sm text-muted-foreground">Fetching data from HowLongToBeat...</p>
-                    )}
-                  </div>
+                   <div className="space-y-2">
+                     <Label htmlFor="howLongToBeatUrl">HowLongToBeat URL</Label>
+                     <div className="flex gap-2">
+                       <Input
+                         id="howLongToBeatUrl"
+                         type="url"
+                         value={formData.howLongToBeatUrl}
+                         onChange={(e) => handleInputChange("howLongToBeatUrl", e.target.value)}
+                         placeholder="https://howlongtobeat.com/game/..."
+                         className="bg-background border-border"
+                       />
+                       <Button
+                         type="button"
+                         variant="outline"
+                         size="icon"
+                         onClick={handleSearchHLTB}
+                         disabled={isSearchingHLTB || !formData.title}
+                         title="Search for game on HowLongToBeat"
+                       >
+                         {isSearchingHLTB ? (
+                           <Loader2 className="h-4 w-4 animate-spin" />
+                         ) : (
+                           <Search className="h-4 w-4" />
+                         )}
+                       </Button>
+                       <Button
+                         type="button"
+                         variant="outline"
+                         size="icon"
+                         onClick={handleFetchHLTBData}
+                         disabled={isFetchingHLTB || !formData.howLongToBeatUrl}
+                         title="Fetch cover art and duration from HowLongToBeat"
+                       >
+                         {isFetchingHLTB ? (
+                           <Loader2 className="h-4 w-4 animate-spin" />
+                         ) : (
+                           <Download className="h-4 w-4" />
+                         )}
+                       </Button>
+                     </div>
+                     {isSearchingHLTB && (
+                       <p className="text-sm text-muted-foreground">Searching HowLongToBeat...</p>
+                     )}
+                     {isFetchingHLTB && (
+                       <p className="text-sm text-muted-foreground">Fetching data from HowLongToBeat...</p>
+                     )}
+                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -597,6 +668,51 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
           </DialogFooter>
         </form>
       </DialogContent>
+
+      {/* Search Results Dialog */}
+      <Dialog open={showSearchDialog} onOpenChange={setShowSearchDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Search Results - HowLongToBeat</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {searchResults.map((game, index) => (
+              <div 
+                key={game.id || index}
+                className="flex items-center gap-4 p-4 border border-border rounded-lg hover:bg-secondary/20 cursor-pointer transition-colors"
+                onClick={() => handleSelectSearchResult(game)}
+              >
+                {game.imageUrl && (
+                  <img 
+                    src={game.imageUrl} 
+                    alt={game.title}
+                    className="w-12 h-16 object-contain bg-muted rounded"
+                  />
+                )}
+                <div className="flex-1">
+                  <h3 className="font-medium text-sm">{game.title}</h3>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {game.mainStory > 0 && (
+                      <span className="mr-3">Main Story: {game.mainStory}h</span>
+                    )}
+                    {game.platforms && (
+                      <span>Platforms: {game.platforms}</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {game.url}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSearchDialog(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
