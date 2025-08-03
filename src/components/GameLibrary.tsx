@@ -440,15 +440,32 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         )}
         
         {viewMode === 'backlog' && !game.is_completed && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleMarkCompleted}
-            className="h-6 w-6 p-0"
-            title="Mark as completed"
-          >
-            <CheckCircle className="h-3 w-3" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0"
+                title="Mark as completed"
+              >
+                <CheckCircle className="h-3 w-3" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Mark Game as Completed</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to mark "{game.title}" as completed? This will move it to your completed games list.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleMarkCompleted}>
+                  Mark Completed
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
         
         <Button
