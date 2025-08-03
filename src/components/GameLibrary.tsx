@@ -368,7 +368,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
                 </span>
               )}
               
-              {game.comment && (
+              {viewMode !== 'backlog' && game.comment && (
                 <span className="truncate max-w-48">{game.comment}</span>
               )}
             </div>
