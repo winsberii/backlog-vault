@@ -35,9 +35,10 @@ interface GameLibraryProps {
   viewMode: ViewMode;
   onEditGame: (game: any) => void;
   refreshTrigger?: number;
+  onStatsChange?: (stats: { count: number; totalDuration: number }) => void;
 }
 
-export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger }: GameLibraryProps) => {
+export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChange }: GameLibraryProps) => {
   const { user } = useAuth();
   const [games, setGames] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -130,6 +131,18 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger }: GameLibrar
     // Default sorting for other views (by creation date)
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
+
+  // Calculate statistics and notify parent
+  useEffect(() => {
+    const totalDuration = filteredGames.reduce((sum, game) => {
+      return sum + (game.estimated_duration || 0);
+    }, 0);
+
+    onStatsChange?.({
+      count: filteredGames.length,
+      totalDuration
+    });
+  }, [filteredGames, onStatsChange]);
 
   if (isLoading) {
     return (

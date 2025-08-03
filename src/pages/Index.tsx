@@ -14,6 +14,7 @@ const Index = () => {
   const [showImportExport, setShowImportExport] = useState(false);
   const [editingGame, setEditingGame] = useState<any>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [listStats, setListStats] = useState({ count: 0, totalDuration: 0 });
   const {
     user,
     loading,
@@ -76,9 +77,17 @@ const Index = () => {
 
         {/* Add Game Button */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold capitalize">
-            {currentView === 'backlog' ? 'My Backlog' : currentView === 'wishlist' ? 'Wishlist' : 'Completed Games'}
-          </h2>
+          <div>
+            <h2 className="text-2xl font-semibold capitalize">
+              {currentView === 'backlog' ? 'My Backlog' : currentView === 'wishlist' ? 'Wishlist' : currentView === 'tosort' ? 'To Sort' : 'Completed Games'}
+            </h2>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+              <span>{listStats.count} items</span>
+              {listStats.totalDuration > 0 && (
+                <span>{listStats.totalDuration}h estimated duration</span>
+              )}
+            </div>
+          </div>
           <div className="flex gap-2">
             <Button
               onClick={() => setShowImportExport(true)}
@@ -96,7 +105,12 @@ const Index = () => {
         </div>
 
         {/* Game Library */}
-        <GameLibrary viewMode={currentView} onEditGame={handleEditGame} refreshTrigger={refreshTrigger} />
+        <GameLibrary 
+          viewMode={currentView} 
+          onEditGame={handleEditGame} 
+          refreshTrigger={refreshTrigger}
+          onStatsChange={setListStats}
+        />
 
         {/* Game Form Modal */}
         {showGameForm && <GameForm game={editingGame} onClose={handleCloseForm} onSave={handleGameSaved} />}
