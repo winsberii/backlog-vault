@@ -5,7 +5,7 @@ import { GameForm } from "@/components/GameForm";
 import { ImportExport } from "@/components/ImportExport";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { Plus, FileSpreadsheet } from "lucide-react";
+import { Plus, FileSpreadsheet, Gamepad, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort';
 const Index = () => {
@@ -82,9 +82,15 @@ const Index = () => {
               {currentView === 'backlog' ? 'My Backlog' : currentView === 'wishlist' ? 'Wishlist' : currentView === 'tosort' ? 'To Sort' : 'Completed Games'}
             </h2>
             <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-              <span>{listStats.count} items</span>
+              <span className="flex items-center gap-1">
+                <Gamepad className="h-4 w-4" />
+                {listStats.count}
+              </span>
               {listStats.totalDuration > 0 && (
-                <span>{listStats.totalDuration}h estimated duration</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  {listStats.totalDuration}h
+                </span>
               )}
             </div>
           </div>
