@@ -324,7 +324,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             {/* Title and platform on same line */}
             <div className="flex items-center gap-2">
               <h3 className="font-medium text-sm truncate">{game.title}</h3>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">{game.platform_info?.name}</span>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {game.platform_info?.name}
+                {game.playthrough_platform_info?.name && game.playthrough_platform_info.name !== game.platform_info?.name && (
+                  <> | {game.playthrough_platform_info.name}</>
+                )}
+              </span>
             </div>
             
             {/* Compact info line */}
