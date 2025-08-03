@@ -25,7 +25,8 @@ import {
   DollarSign,
   Copy,
   Trash2,
-  Square
+  Square,
+  Trophy
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -340,7 +341,10 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
                     <span>Played: {game.actual_playtime}h</span>
                   )}
                   {game.achievements > 0 && (
-                    <span>{game.achievements} achievements</span>
+                    <span className="flex items-center gap-1">
+                      <Trophy className="h-2.5 w-2.5" />
+                      {game.achievements}
+                    </span>
                   )}
                 </>
               )}
