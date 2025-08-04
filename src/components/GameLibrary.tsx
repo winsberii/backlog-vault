@@ -143,7 +143,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       count: filteredGames.length,
       totalDuration
     });
-  }, [filteredGames, onStatsChange]);
+  }, [filteredGames]);
 
   if (isLoading) {
     return (
