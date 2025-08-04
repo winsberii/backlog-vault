@@ -3,6 +3,8 @@ import { ViewMode } from "@/pages/Index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +47,9 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<string>("title");
 
   const fetchGames = async () => {
     if (!user) {
@@ -81,24 +86,59 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
     fetchGames();
   }, [user, refreshTrigger]);
 
-  // Filter games based on view mode
+  // Get unique platforms for filter
+  const uniquePlatforms = Array.from(new Set(games.map(game => game.platform_info?.name).filter(Boolean)));
+
+  // Filter games based on view mode and filters
   const filteredGames = games.filter((game) => {
+    // View mode filter
+    let passesViewMode = false;
     switch (viewMode) {
       case 'backlog':
-        return !game.is_completed && !game.tosort;
+        passesViewMode = !game.is_completed && !game.tosort;
+        break;
       case 'wishlist':
-        return game.needs_purchase && !game.tosort;
+        passesViewMode = game.needs_purchase && !game.tosort;
+        break;
       case 'completed':
-        return game.is_completed && !game.tosort;
+        passesViewMode = game.is_completed && !game.tosort;
+        break;
       case 'tosort':
-        return game.tosort;
+        passesViewMode = game.tosort;
+        break;
       default:
-        return true;
+        passesViewMode = true;
     }
-  }).filter((game) => 
-    game.title.toLowerCase().includes(searchTerm.toLowerCase())
-  ).sort((a, b) => {
-    // Special sorting for backlog view
+
+    // Search filter
+    const passesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Platform filter
+    const passesPlatform = selectedPlatforms.length === 0 || 
+      selectedPlatforms.includes(game.platform_info?.name);
+
+    // Status filter
+    let passesStatus = selectedStatuses.length === 0;
+    if (selectedStatuses.length > 0) {
+      if (selectedStatuses.includes('playing') && game.is_currently_playing) passesStatus = true;
+      if (selectedStatuses.includes('completed') && game.is_completed) passesStatus = true;
+      if (selectedStatuses.includes('wishlist') && game.needs_purchase) passesStatus = true;
+    }
+
+    return passesViewMode && passesSearch && passesPlatform && passesStatus;
+  }).sort((a, b) => {
+    // Custom sorting based on sortBy
+    if (sortBy === 'title') {
+      return a.title.localeCompare(b.title);
+    }
+    if (sortBy === 'duration') {
+      return (b.estimated_duration || 0) - (a.estimated_duration || 0);
+    }
+    if (sortBy === 'created') {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+
+    // Default sorting for backlog view
     if (viewMode === 'backlog') {
       // Primary sort: Currently Playing (descending) - playing games first
       if (a.is_currently_playing !== b.is_currently_playing) {
@@ -178,11 +218,89 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="bg-card border border-border rounded-lg p-4 space-y-4">
-          <h3 className="font-medium text-sm">Filters</h3>
-          <div className="text-sm text-muted-foreground">
-            Filter options will be added here
+        <div className="bg-card border border-border rounded-lg p-4 space-y-4 z-10 relative">
+          <h3 className="font-medium text-sm">Filters & Sorting</h3>
+          
+          {/* Sort Options */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Sort by</label>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background border border-border z-50">
+                <SelectItem value="title">Title A-Z</SelectItem>
+                <SelectItem value="duration">Duration (High to Low)</SelectItem>
+                <SelectItem value="created">Recently Added</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {/* Platform Filter */}
+          {uniquePlatforms.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Platforms</label>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {uniquePlatforms.map((platform) => (
+                  <div key={platform} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`platform-${platform}`}
+                      checked={selectedPlatforms.includes(platform)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedPlatforms([...selectedPlatforms, platform]);
+                        } else {
+                          setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform));
+                        }
+                      }}
+                    />
+                    <label htmlFor={`platform-${platform}`} className="text-xs">{platform}</label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Status Filter */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Status</label>
+            <div className="space-y-1">
+              {[
+                { id: 'playing', label: 'Currently Playing' },
+                { id: 'completed', label: 'Completed' },
+                { id: 'wishlist', label: 'Wishlist' }
+              ].map((status) => (
+                <div key={status.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`status-${status.id}`}
+                    checked={selectedStatuses.includes(status.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedStatuses([...selectedStatuses, status.id]);
+                      } else {
+                        setSelectedStatuses(selectedStatuses.filter(s => s !== status.id));
+                      }
+                    }}
+                  />
+                  <label htmlFor={`status-${status.id}`} className="text-xs">{status.label}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Clear Filters */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              setSelectedPlatforms([]);
+              setSelectedStatuses([]);
+              setSortBy("title");
+            }}
+            className="w-full"
+          >
+            Clear All Filters
+          </Button>
         </div>
       )}
 
