@@ -176,6 +176,16 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
         </Button>
       </div>
 
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="bg-card border border-border rounded-lg p-4 space-y-4">
+          <h3 className="font-medium text-sm">Filters</h3>
+          <div className="text-sm text-muted-foreground">
+            Filter options will be added here
+          </div>
+        </div>
+      )}
+
       {/* Games List */}
       <div className="space-y-1">
         {filteredGames.map((game) => (
