@@ -307,23 +307,23 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
   };
 
   return (
-    <div className="flex items-center gap-2.5 p-2.5 bg-card border border-border rounded hover:bg-secondary/20 transition-colors group">
-      {/* Cover Image - 20% larger with hover effect */}
+    <div className="flex items-center gap-2 p-2 bg-card border border-border rounded hover:bg-secondary/20 transition-colors group">
+      {/* Cover Image */}
       <div className="flex-shrink-0">
         <img 
           src={game.cover_image || "/placeholder.svg"} 
           alt={game.title}
-          className="w-10 h-12 object-contain bg-muted rounded transition-transform duration-200 hover:scale-[4] hover:z-10 relative"
+          className="w-9 h-11 object-contain bg-muted rounded transition-transform duration-200 hover:scale-[4] hover:z-10 relative"
         />
       </div>
 
-      {/* Game Info - 20% larger */}
+      {/* Game Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2.5">
+        <div className="flex items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
             {/* Title and platform on same line */}
-            <div className="flex items-center gap-2.5">
-              <h3 className="font-medium text-base truncate">{game.title}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm truncate">{game.title}</h3>
               <span className="text-sm text-muted-foreground whitespace-nowrap">
                 {game.platform_info?.name}
                 {game.playthrough_platform_info?.name && game.playthrough_platform_info.name !== game.platform_info?.name && (
@@ -333,12 +333,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             </div>
             
             {/* Compact info line */}
-            <div className="flex items-center gap-3.5 text-sm text-muted-foreground mt-1">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
               {viewMode === 'backlog' && (
                 <>
                   {game.estimated_duration && (
                     <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
+                      <Clock className="h-2.5 w-2.5" />
                       {game.estimated_duration}h
                     </span>
                   )}
@@ -347,7 +347,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
                   )}
                   {game.achievements > 0 && (
                     <span className="flex items-center gap-1">
-                      <Trophy className="h-3 w-3" />
+                      <Trophy className="h-2.5 w-2.5" />
                       {game.achievements}
                     </span>
                   )}
@@ -356,14 +356,14 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               
               {viewMode === 'wishlist' && game.price && (
                 <span className="flex items-center gap-1">
-                  <DollarSign className="h-3 w-3" />
+                  <DollarSign className="h-2.5 w-2.5" />
                   ${game.price}
                 </span>
               )}
               
               {viewMode === 'completed' && game.completion_date && (
                 <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
+                  <Calendar className="h-2.5 w-2.5" />
                   {new Date(game.completion_date).toLocaleDateString()}
                 </span>
               )}
@@ -374,17 +374,17 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             </div>
           </div>
 
-          {/* Status Badges - 20% larger */}
-          <div className="flex items-center gap-1.5">
+          {/* Status Badges */}
+          <div className="flex items-center gap-1">
             {game.is_currently_playing && (
-              <Badge variant="secondary" className="text-sm px-2 py-0.5">
-                <Play className="h-3 w-3 mr-1" />
+              <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                <Play className="h-2.5 w-2.5 mr-1" />
                 Playing
               </Badge>
             )}
             {game.is_completed && (
-              <Badge variant="secondary" className="text-sm px-2 py-0.5 bg-green-100 text-green-800">
-                <CheckCircle className="h-3 w-3 mr-1" />
+              <Badge variant="secondary" className="text-xs px-1.5 py-0 bg-green-100 text-green-800">
+                <CheckCircle className="h-2.5 w-2.5 mr-1" />
                 Done
               </Badge>
             )}
@@ -392,15 +392,15 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         </div>
       </div>
 
-      {/* Actions - 20% larger */}
-      <div className="flex-shrink-0 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Actions */}
+      <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           size="sm"
           variant="ghost"
           onClick={onEdit}
-          className="h-7 w-7 p-0"
+          className="h-6 w-6 p-0"
         >
-          <Edit className="h-3.5 w-3.5" />
+          <Edit className="h-3 w-3" />
         </Button>
         
         {viewMode === 'backlog' && !game.is_currently_playing && (
@@ -408,10 +408,10 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             size="sm"
             variant="ghost"
             onClick={handleToggleCurrentlyPlaying}
-            className="h-7 w-7 p-0"
+            className="h-6 w-6 p-0"
             title="Mark as currently playing"
           >
-            <Play className="h-3.5 w-3.5" />
+            <Play className="h-3 w-3" />
           </Button>
         )}
         
@@ -420,10 +420,10 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             size="sm"
             variant="ghost"
             onClick={handleToggleCurrentlyPlaying}
-            className="h-7 w-7 p-0"
+            className="h-6 w-6 p-0"
             title="Stop playing"
           >
-            <Square className="h-3.5 w-3.5" />
+            <Square className="h-3 w-3" />
           </Button>
         )}
         
@@ -432,10 +432,10 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             size="sm"
             variant="ghost"
             onClick={handleToggleCurrentlyPlaying}
-            className="h-7 w-7 p-0"
+            className="h-6 w-6 p-0"
             title="Stop playing"
           >
-            <Square className="h-3.5 w-3.5" />
+            <Square className="h-3 w-3" />
           </Button>
         )}
         
@@ -445,10 +445,10 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 w-7 p-0"
+                className="h-6 w-6 p-0"
                 title="Mark as completed"
               >
-                <CheckCircle className="h-3.5 w-3.5" />
+                <CheckCircle className="h-3 w-3" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -472,10 +472,10 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
           size="sm"
           variant="ghost"
           onClick={handleClone}
-          className="h-7 w-7 p-0"
+          className="h-6 w-6 p-0"
           title="Clone game"
         >
-          <Copy className="h-3.5 w-3.5" />
+          <Copy className="h-3 w-3" />
         </Button>
         
         <AlertDialog>
@@ -483,10 +483,10 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             <Button
               size="sm"
               variant="ghost"
-              className="h-7 w-7 p-0 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              className="h-6 w-6 p-0 text-destructive hover:bg-destructive hover:text-destructive-foreground"
               title="Delete game"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-3 w-3" />
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
