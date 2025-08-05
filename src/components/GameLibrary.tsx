@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ViewMode } from "@/pages/Index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,84 +90,86 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   const uniquePlatforms = Array.from(new Set(games.map(game => game.platform_info?.name).filter(Boolean)));
 
   // Filter games based on view mode and filters
-  const filteredGames = games.filter((game) => {
-    // View mode filter
-    let passesViewMode = false;
-    switch (viewMode) {
-      case 'backlog':
-        passesViewMode = !game.is_completed && !game.tosort;
-        break;
-      case 'wishlist':
-        passesViewMode = game.needs_purchase && !game.tosort;
-        break;
-      case 'completed':
-        passesViewMode = game.is_completed && !game.tosort;
-        break;
-      case 'tosort':
-        passesViewMode = game.tosort;
-        break;
-      default:
-        passesViewMode = true;
-    }
-
-    // Search filter
-    const passesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase());
-
-    // Platform filter
-    const passesPlatform = selectedPlatforms.length === 0 || 
-      selectedPlatforms.includes(game.platform_info?.name);
-
-    // Status filter
-    let passesStatus = selectedStatuses.length === 0;
-    if (selectedStatuses.length > 0) {
-      if (selectedStatuses.includes('playing') && game.is_currently_playing) passesStatus = true;
-      if (selectedStatuses.includes('completed') && game.is_completed) passesStatus = true;
-      if (selectedStatuses.includes('wishlist') && game.needs_purchase) passesStatus = true;
-    }
-
-    return passesViewMode && passesSearch && passesPlatform && passesStatus;
-  }).sort((a, b) => {
-    // View-specific sorting takes precedence over manual filter sorting
-    if (viewMode === 'backlog') {
-      // Primary sort: Currently Playing (descending) - playing games first
-      if (a.is_currently_playing !== b.is_currently_playing) {
-        return b.is_currently_playing ? 1 : -1;
+  const filteredGames = useMemo(() => {
+    return games.filter((game) => {
+      // View mode filter
+      let passesViewMode = false;
+      switch (viewMode) {
+        case 'backlog':
+          passesViewMode = !game.is_completed && !game.tosort;
+          break;
+        case 'wishlist':
+          passesViewMode = game.needs_purchase && !game.tosort;
+          break;
+        case 'completed':
+          passesViewMode = game.is_completed && !game.tosort;
+          break;
+        case 'tosort':
+          passesViewMode = game.tosort;
+          break;
+        default:
+          passesViewMode = true;
       }
-      // Secondary sort: Title (ascending) - alphabetical
-      return a.title.localeCompare(b.title);
-    }
-    
-    if (viewMode === 'completed') {
-      // Primary sort: Completion Date (descending) - most recent first
-      if (a.completion_date && b.completion_date) {
-        const dateA = new Date(a.completion_date).getTime();
-        const dateB = new Date(b.completion_date).getTime();
-        if (dateA !== dateB) {
-          return dateB - dateA;
+
+      // Search filter
+      const passesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Platform filter
+      const passesPlatform = selectedPlatforms.length === 0 || 
+        selectedPlatforms.includes(game.platform_info?.name);
+
+      // Status filter
+      let passesStatus = selectedStatuses.length === 0;
+      if (selectedStatuses.length > 0) {
+        if (selectedStatuses.includes('playing') && game.is_currently_playing) passesStatus = true;
+        if (selectedStatuses.includes('completed') && game.is_completed) passesStatus = true;
+        if (selectedStatuses.includes('wishlist') && game.needs_purchase) passesStatus = true;
+      }
+
+      return passesViewMode && passesSearch && passesPlatform && passesStatus;
+    }).sort((a, b) => {
+      // View-specific sorting takes precedence over manual filter sorting
+      if (viewMode === 'backlog') {
+        // Primary sort: Currently Playing (descending) - playing games first
+        if (a.is_currently_playing !== b.is_currently_playing) {
+          return b.is_currently_playing ? 1 : -1;
         }
-      } else if (a.completion_date && !b.completion_date) {
-        return -1;
-      } else if (!a.completion_date && b.completion_date) {
-        return 1;
+        // Secondary sort: Title (ascending) - alphabetical
+        return a.title.localeCompare(b.title);
       }
-      // Secondary sort: Title (ascending) - alphabetical
-      return a.title.localeCompare(b.title);
-    }
-    
-    // For other views (wishlist, tosort), use manual sorting from filters
-    if (sortBy === 'title') {
-      return a.title.localeCompare(b.title);
-    }
-    if (sortBy === 'duration') {
-      return (b.estimated_duration || 0) - (a.estimated_duration || 0);
-    }
-    if (sortBy === 'created') {
+      
+      if (viewMode === 'completed') {
+        // Primary sort: Completion Date (descending) - most recent first
+        if (a.completion_date && b.completion_date) {
+          const dateA = new Date(a.completion_date).getTime();
+          const dateB = new Date(b.completion_date).getTime();
+          if (dateA !== dateB) {
+            return dateB - dateA;
+          }
+        } else if (a.completion_date && !b.completion_date) {
+          return -1;
+        } else if (!a.completion_date && b.completion_date) {
+          return 1;
+        }
+        // Secondary sort: Title (ascending) - alphabetical
+        return a.title.localeCompare(b.title);
+      }
+      
+      // For other views (wishlist, tosort), use manual sorting from filters
+      if (sortBy === 'title') {
+        return a.title.localeCompare(b.title);
+      }
+      if (sortBy === 'duration') {
+        return (b.estimated_duration || 0) - (a.estimated_duration || 0);
+      }
+      if (sortBy === 'created') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      
+      // Default fallback sorting (by creation date)
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    }
-    
-    // Default fallback sorting (by creation date)
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
+    });
+  }, [games, viewMode, searchTerm, selectedPlatforms, selectedStatuses, sortBy]);
 
   // Calculate statistics and notify parent
   useEffect(() => {
