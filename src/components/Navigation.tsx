@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ViewMode } from "@/pages/Index";
 import { Gamepad2, Heart, Trophy, Filter } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { CurrencySelector } from "./CurrencySelector";
 
 interface NavigationProps {
   currentView: ViewMode;
@@ -56,7 +57,10 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
         );
       })}
       </div>
-      <ThemeToggle />
+      <div className="flex items-center space-x-2">
+        <CurrencySelector />
+        <ThemeToggle />
+      </div>
     </div>
   );
 };
