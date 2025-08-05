@@ -127,18 +127,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
 
     return passesViewMode && passesSearch && passesPlatform && passesStatus;
   }).sort((a, b) => {
-    // Custom sorting based on sortBy
-    if (sortBy === 'title') {
-      return a.title.localeCompare(b.title);
-    }
-    if (sortBy === 'duration') {
-      return (b.estimated_duration || 0) - (a.estimated_duration || 0);
-    }
-    if (sortBy === 'created') {
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    }
-
-    // Default sorting for backlog view
+    // View-specific sorting takes precedence over manual filter sorting
     if (viewMode === 'backlog') {
       // Primary sort: Currently Playing (descending) - playing games first
       if (a.is_currently_playing !== b.is_currently_playing) {
@@ -147,12 +136,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       // Secondary sort: Title (ascending) - alphabetical
       return a.title.localeCompare(b.title);
     }
-    // Special sorting for wishlist view
-    if (viewMode === 'wishlist') {
-      // Primary sort: Title (ascending) - alphabetical
-      return a.title.localeCompare(b.title);
-    }
-    // Special sorting for completed view
+    
     if (viewMode === 'completed') {
       // Primary sort: Completion Date (descending) - most recent first
       if (a.completion_date && b.completion_date) {
@@ -169,7 +153,19 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       // Secondary sort: Title (ascending) - alphabetical
       return a.title.localeCompare(b.title);
     }
-    // Default sorting for other views (by creation date)
+    
+    // For other views (wishlist, tosort), use manual sorting from filters
+    if (sortBy === 'title') {
+      return a.title.localeCompare(b.title);
+    }
+    if (sortBy === 'duration') {
+      return (b.estimated_duration || 0) - (a.estimated_duration || 0);
+    }
+    if (sortBy === 'created') {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+    
+    // Default fallback sorting (by creation date)
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
