@@ -23,6 +23,7 @@ import {
   DollarSign,
   CheckCircle 
 } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface GameCardProps {
   game: {
@@ -47,6 +48,7 @@ interface GameCardProps {
 }
 
 export const GameCard = ({ game, viewMode, onEdit, onDelete }: GameCardProps) => {
+  const { formatPrice } = useCurrency();
   const handleClone = () => {
     // TODO: Implement clone functionality
     console.log("Clone game:", game.id);
@@ -121,7 +123,7 @@ export const GameCard = ({ game, viewMode, onEdit, onDelete }: GameCardProps) =>
               <span>Price:</span>
               <div className="flex items-center text-foreground">
                 <DollarSign className="h-3 w-3 mr-1" />
-                ${game.price}
+                {formatPrice(game.price)}
               </div>
             </div>
           )}

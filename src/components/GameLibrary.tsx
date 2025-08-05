@@ -33,6 +33,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface GameLibraryProps {
   viewMode: ViewMode;
@@ -342,6 +343,7 @@ interface GameListItemProps {
 
 const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) => {
   const { toast } = useToast();
+  const { formatPrice } = useCurrency();
   
   const handleClone = () => {
     console.log("Clone game:", game.id);
@@ -483,7 +485,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               {viewMode === 'wishlist' && game.price && (
                 <span className="flex items-center gap-1">
                   <DollarSign className="h-2.5 w-2.5" />
-                  ${game.price}
+                  {formatPrice(game.price)}
                 </span>
               )}
               
