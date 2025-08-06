@@ -49,8 +49,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<string>("title");
+  const [selectedPlaythroughPlatforms, setSelectedPlaythroughPlatforms] = useState<string[]>([]);
 
   const fetchGames = async () => {
     if (!user) {
@@ -89,6 +88,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
 
   // Get unique platforms for filter
   const uniquePlatforms = Array.from(new Set(games.map(game => game.platform_info?.name).filter(Boolean)));
+  const uniquePlaythroughPlatforms = Array.from(new Set(games.map(game => game.playthrough_platform_info?.name).filter(Boolean)));
 
   // Filter games based on view mode and filters
   const filteredGames = useMemo(() => {
@@ -119,15 +119,11 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       const passesPlatform = selectedPlatforms.length === 0 || 
         selectedPlatforms.includes(game.platform_info?.name);
 
-      // Status filter
-      let passesStatus = selectedStatuses.length === 0;
-      if (selectedStatuses.length > 0) {
-        if (selectedStatuses.includes('playing') && game.is_currently_playing) passesStatus = true;
-        if (selectedStatuses.includes('completed') && game.is_completed) passesStatus = true;
-        if (selectedStatuses.includes('wishlist') && game.needs_purchase) passesStatus = true;
-      }
+      // Playthrough Platform filter
+      const passesPlaythroughPlatform = selectedPlaythroughPlatforms.length === 0 || 
+        selectedPlaythroughPlatforms.includes(game.playthrough_platform_info?.name);
 
-      return passesViewMode && passesSearch && passesPlatform && passesStatus;
+      return passesViewMode && passesSearch && passesPlatform && passesPlaythroughPlatform;
     }).sort((a, b) => {
       // View-specific sorting takes precedence over manual filter sorting
       if (viewMode === 'backlog') {
@@ -156,21 +152,10 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
         return a.title.localeCompare(b.title);
       }
       
-      // For other views (wishlist, tosort), use manual sorting from filters
-      if (sortBy === 'title') {
-        return a.title.localeCompare(b.title);
-      }
-      if (sortBy === 'duration') {
-        return (b.estimated_duration || 0) - (a.estimated_duration || 0);
-      }
-      if (sortBy === 'created') {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-      
       // Default fallback sorting (by creation date)
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [games, viewMode, searchTerm, selectedPlatforms, selectedStatuses, sortBy]);
+  }, [games, viewMode, searchTerm, selectedPlatforms, selectedPlaythroughPlatforms]);
 
   // Calculate statistics and notify parent
   useEffect(() => {
@@ -218,22 +203,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       {/* Filter Panel */}
       {showFilters && (
         <div className="bg-card border border-border rounded-lg p-4 space-y-4 z-10 relative">
-          <h3 className="font-medium text-sm">Filters & Sorting</h3>
-          
-          {/* Sort Options */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Sort by</label>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full bg-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background border border-border z-50">
-                <SelectItem value="title">Title A-Z</SelectItem>
-                <SelectItem value="duration">Duration (High to Low)</SelectItem>
-                <SelectItem value="created">Recently Added</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <h3 className="font-medium text-sm">Filters</h3>
 
           {/* Platform Filter */}
           {uniquePlatforms.length > 0 && (
@@ -260,32 +230,30 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
             </div>
           )}
 
-          {/* Status Filter */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Status</label>
-            <div className="space-y-1">
-              {[
-                { id: 'playing', label: 'Currently Playing' },
-                { id: 'completed', label: 'Completed' },
-                { id: 'wishlist', label: 'Wishlist' }
-              ].map((status) => (
-                <div key={status.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`status-${status.id}`}
-                    checked={selectedStatuses.includes(status.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedStatuses([...selectedStatuses, status.id]);
-                      } else {
-                        setSelectedStatuses(selectedStatuses.filter(s => s !== status.id));
-                      }
-                    }}
-                  />
-                  <label htmlFor={`status-${status.id}`} className="text-xs">{status.label}</label>
-                </div>
-              ))}
+          {/* Playthrough Platform Filter */}
+          {uniquePlaythroughPlatforms.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Playthrough Platforms</label>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {uniquePlaythroughPlatforms.map((platform) => (
+                  <div key={platform} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`playthrough-platform-${platform}`}
+                      checked={selectedPlaythroughPlatforms.includes(platform)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedPlaythroughPlatforms([...selectedPlaythroughPlatforms, platform]);
+                        } else {
+                          setSelectedPlaythroughPlatforms(selectedPlaythroughPlatforms.filter(p => p !== platform));
+                        }
+                      }}
+                    />
+                    <label htmlFor={`playthrough-platform-${platform}`} className="text-xs">{platform}</label>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Clear Filters */}
           <Button 
@@ -293,8 +261,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
             size="sm" 
             onClick={() => {
               setSelectedPlatforms([]);
-              setSelectedStatuses([]);
-              setSortBy("title");
+              setSelectedPlaythroughPlatforms([]);
             }}
             className="w-full"
           >
