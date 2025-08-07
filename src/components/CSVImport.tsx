@@ -44,6 +44,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
     { key: "actual_playtime", label: "Actual Playtime (hours)", required: false },
     { key: "completion_date", label: "Completion Date", required: false },
     { key: "price", label: "Price", required: false },
+    { key: "achievements", label: "Achievements", required: false },
     { key: "comment", label: "Comment", required: false },
     { key: "retro_achievement_url", label: "RetroAchievements URL", required: false },
     { key: "how_long_to_beat_url", label: "HowLongToBeat URL", required: false },
@@ -66,6 +67,8 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
     
     Papa.parse(uploadedFile, {
       header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => header.trim(),
       complete: (results) => {
         if (results.errors.length > 0) {
           toast({
@@ -76,8 +79,13 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
           return;
         }
 
-        setCsvData(results.data);
-        setHeaders(Object.keys(results.data[0] || {}));
+        // Filter out empty rows
+        const validData = results.data.filter((row: any) => 
+          row && Object.values(row).some(value => value && String(value).trim() !== '')
+        );
+
+        setCsvData(validData);
+        setHeaders(Object.keys(validData[0] || {}));
         
         // Auto-map fields based on common names
         const autoMapping: Record<string, string> = {};
@@ -95,7 +103,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
 
         toast({
           title: "File Parsed",
-          description: `Found ${results.data.length} rows to import.`,
+          description: `Found ${validData.length} rows to import.`,
         });
       },
       error: (error) => {
@@ -187,6 +195,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
                 
                 case 'estimated_duration':
                 case 'actual_playtime':
+                case 'achievements':
                   const numValue = parseInt(value);
                   if (!isNaN(numValue)) gameData[gameField] = numValue;
                   break;
