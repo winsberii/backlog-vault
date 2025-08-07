@@ -27,6 +27,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isFetchingHLTB, setIsFetchingHLTB] = useState(false);
   const [isSearchingHLTB, setIsSearchingHLTB] = useState(false);
+  const [isFetchingRA, setIsFetchingRA] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
   const [platforms, setPlatforms] = useState<any[]>([]);
@@ -332,6 +333,73 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     });
   };
 
+  const handleFetchRAData = async () => {
+    if (!formData.retroAchievementUrl) {
+      toast({
+        title: "Error",
+        description: "Please enter a RetroAchievements URL first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user?.id) {
+      toast({
+        title: "Error", 
+        description: "You must be logged in to fetch data.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!game?.id) {
+      toast({
+        title: "Error",
+        description: "Please save the game first before fetching achievements.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsFetchingRA(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-retroachievements', {
+        body: { 
+          gameId: game.id,
+          retroAchievementUrl: formData.retroAchievementUrl
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        const { achievementCount } = data;
+        handleInputChange("achievements", achievementCount.toString());
+        
+        toast({
+          title: "Success",
+          description: `Found ${achievementCount} achievements from RetroAchievements`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to fetch data from RetroAchievements",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error fetching RA data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch data from RetroAchievements. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingRA(false);
+    }
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card border-border">
@@ -593,18 +661,42 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                 <CardHeader>
                   <CardTitle>External Integrations</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="retroAchievementUrl">RetroAchievements URL</Label>
-                    <Input
-                      id="retroAchievementUrl"
-                      type="url"
-                      value={formData.retroAchievementUrl}
-                      onChange={(e) => handleInputChange("retroAchievementUrl", e.target.value)}
-                      placeholder="https://retroachievements.org/game/..."
-                      className="bg-background border-border"
-                    />
-                  </div>
+                 <CardContent className="space-y-4">
+                   <div className="space-y-2">
+                     <Label htmlFor="retroAchievementUrl">RetroAchievements URL</Label>
+                     <div className="flex gap-2">
+                       <Input
+                         id="retroAchievementUrl"
+                         type="url"
+                         value={formData.retroAchievementUrl}
+                         onChange={(e) => handleInputChange("retroAchievementUrl", e.target.value)}
+                         placeholder="https://retroachievements.org/game/..."
+                         className="bg-background border-border"
+                       />
+                       <Button
+                         type="button"
+                         variant="outline"
+                         size="icon"
+                         onClick={handleFetchRAData}
+                         disabled={isFetchingRA || !formData.retroAchievementUrl || !game?.id}
+                         title="Fetch achievements count from RetroAchievements"
+                       >
+                         {isFetchingRA ? (
+                           <Loader2 className="h-4 w-4 animate-spin" />
+                         ) : (
+                           <Download className="h-4 w-4" />
+                         )}
+                       </Button>
+                     </div>
+                     {isFetchingRA && (
+                       <p className="text-sm text-muted-foreground">Fetching achievements from RetroAchievements...</p>
+                     )}
+                     {!game?.id && formData.retroAchievementUrl && (
+                       <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                         Save the game first to fetch achievements data.
+                       </p>
+                     )}
+                   </div>
 
                    <div className="space-y-2">
                      <Label htmlFor="howLongToBeatUrl">HowLongToBeat URL</Label>
