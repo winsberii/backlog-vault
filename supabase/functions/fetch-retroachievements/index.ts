@@ -67,8 +67,25 @@ Deno.serve(async (req) => {
 
     console.log(`Fetching achievements for RetroAchievements game ID: ${raGameId}`);
 
+    // Get RetroAchievements API credentials
+    const raApiKey = Deno.env.get('RETROACHIEVEMENTS_API_KEY');
+    const raUsername = Deno.env.get('RETROACHIEVEMENTS_USERNAME');
+    
+    if (!raApiKey || !raUsername) {
+      console.error('Missing RetroAchievements API credentials');
+      return new Response(
+        JSON.stringify({ error: 'RetroAchievements API credentials not configured' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     // Fetch game info from RetroAchievements API
-    const raApiUrl = `https://retroachievements.org/API/API_GetGame.php?i=${raGameId}`;
+    const raApiUrl = `https://retroachievements.org/API/API_GetGame.php?y=${encodeURIComponent(raApiKey)}&i=${raGameId}`;
+    
+    console.log(`Calling RetroAchievements API: ${raApiUrl.replace(raApiKey, '[API_KEY_HIDDEN]')}`);
     
     const response = await fetch(raApiUrl, {
       headers: {
