@@ -28,7 +28,8 @@ import {
   Copy,
   Trash2,
   Square,
-  Trophy
+  Trophy,
+  X
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -187,8 +188,18 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
             placeholder="Search games..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-card border-border"
+            className="pl-10 pr-10 bg-card border-border"
           />
+          {searchTerm && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSearchTerm("")}
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-secondary/50"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
         <Button
           variant="outline"
