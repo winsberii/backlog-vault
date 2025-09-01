@@ -153,6 +153,11 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
         return a.title.localeCompare(b.title);
       }
       
+      if (viewMode === 'tosort') {
+        // Sort by date added (created_at) - most recent first
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      
       // Default fallback sorting (by creation date)
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
