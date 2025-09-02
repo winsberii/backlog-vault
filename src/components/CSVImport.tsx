@@ -40,6 +40,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
     { key: "is_currently_playing", label: "Currently Playing", required: false },
     { key: "is_completed", label: "Completed", required: false },
     { key: "needs_purchase", label: "Needs Purchase", required: false },
+    { key: "tosort", label: "To Sort", required: false },
     { key: "estimated_duration", label: "Estimated Duration (hours)", required: false },
     { key: "actual_playtime", label: "Actual Playtime (hours)", required: false },
     { key: "completion_date", label: "Completion Date", required: false },
@@ -190,6 +191,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
                 case 'is_currently_playing':
                 case 'is_completed':
                 case 'needs_purchase':
+                case 'tosort':
                   gameData[gameField] = value.toLowerCase() === 'true';
                   break;
                 

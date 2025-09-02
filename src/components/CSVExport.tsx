@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +54,7 @@ export const CSVExport = () => {
         "Currently Playing",
         "Completed",
         "Needs Purchase",
+        "To Sort",
         "Estimated Duration (hours)",
         "Actual Playtime (hours)",
         "Completion Date",
@@ -73,6 +75,7 @@ export const CSVExport = () => {
         game.is_currently_playing ? 'true' : 'false',
         game.is_completed ? 'true' : 'false',
         game.needs_purchase ? 'true' : 'false',
+        game.tosort ? 'true' : 'false',
         game.estimated_duration || '',
         game.actual_playtime || '',
         game.completion_date || '',

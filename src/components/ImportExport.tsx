@@ -28,6 +28,7 @@ export const ImportExport = ({ isOpen, onClose, onImportComplete }: ImportExport
       "is_currently_playing",
       "is_completed",
       "needs_purchase",
+      "tosort",
       "estimated_duration",
       "actual_playtime",
       "completion_date",
@@ -39,7 +40,7 @@ export const ImportExport = ({ isOpen, onClose, onImportComplete }: ImportExport
     ];
 
     const csvContent = headers.join(",") + "\n" +
-      "Example Game,PC,Steam,false,true,false,40,35,2024-01-15,29.99,15,Great game!,https://retroachievements.org/game/123,https://howlongtobeat.com/game/123";
+      "Example Game,PC,Steam,false,true,false,false,40,35,2024-01-15,29.99,15,Great game!,https://retroachievements.org/game/123,https://howlongtobeat.com/game/123";
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
