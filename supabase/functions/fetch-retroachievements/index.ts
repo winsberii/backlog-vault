@@ -82,10 +82,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch game info from RetroAchievements API
-    const raApiUrl = `https://retroachievements.org/API/API_GetGame.php?y=${encodeURIComponent(raApiKey)}&i=${raGameId}`;
+    // Fetch game achievements from RetroAchievements API using the extended endpoint
+    const raApiUrl = `https://retroachievements.org/API/API_GetGameExtended.php?y=${encodeURIComponent(raApiKey)}&u=${encodeURIComponent(raUsername)}&i=${raGameId}`;
     
-    console.log(`Calling RetroAchievements API: ${raApiUrl.replace(raApiKey, '[API_KEY_HIDDEN]')}`);
+    console.log(`Calling RetroAchievements API: ${raApiUrl.replace(raApiKey, '[API_KEY_HIDDEN]').replace(raUsername, '[USERNAME_HIDDEN]')}`);
     
     const response = await fetch(raApiUrl, {
       headers: {
@@ -105,15 +105,19 @@ Deno.serve(async (req) => {
     }
 
     const data: RetroAchievementsResponse = await response.json();
-    console.log('RetroAchievements API response:', data);
+    console.log('RetroAchievements API response keys:', Object.keys(data));
 
     // Extract number of achievements
     let achievementCount = 0;
     
     if (data.NumAchievements) {
       achievementCount = data.NumAchievements;
+      console.log(`Found ${achievementCount} achievements via NumAchievements field`);
     } else if (data.Achievements) {
       achievementCount = Object.keys(data.Achievements).length;
+      console.log(`Found ${achievementCount} achievements via Achievements object`);
+    } else {
+      console.log('No achievements found in API response');
     }
 
     // Initialize Supabase client
