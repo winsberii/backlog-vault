@@ -13,6 +13,7 @@ import { X, Upload, Calendar, Loader2, Download, Search } from "lucide-react";
 import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface GameFormProps {
   game?: any;
@@ -23,6 +24,7 @@ interface GameFormProps {
 export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isFetchingHLTB, setIsFetchingHLTB] = useState(false);
@@ -402,21 +404,30 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card border-border">
+      <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[95vh] m-2' : 'max-w-4xl max-h-[90vh]'} overflow-y-auto bg-card border-border`}>
         <DialogHeader>
-          <DialogTitle className="text-2xl">
+          <DialogTitle className={isMobile ? "text-lg" : "text-2xl"}>
             {game ? "Edit Game" : "Add New Game"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="status">Status</TabsTrigger>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="integration">Integration</TabsTrigger>
+            <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-4'}`}>
+              <TabsTrigger value="basic" className={isMobile ? "text-xs px-2" : ""}>
+                {isMobile ? "Basic" : "Basic Info"}
+              </TabsTrigger>
+              <TabsTrigger value="status" className={isMobile ? "text-xs px-2" : ""}>Status</TabsTrigger>
+              {!isMobile && <TabsTrigger value="details">Details</TabsTrigger>}
+              {!isMobile && <TabsTrigger value="integration">Integration</TabsTrigger>}
             </TabsList>
+            
+            {isMobile && (
+              <TabsList className="grid w-full grid-cols-2 gap-1 mt-2">
+                <TabsTrigger value="details" className="text-xs px-2">Details</TabsTrigger>
+                <TabsTrigger value="integration" className="text-xs px-2">Integration</TabsTrigger>
+              </TabsList>
+            )}
 
             <TabsContent value="basic" className="space-y-4">
               <Card>
@@ -424,7 +435,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                   <CardTitle>Basic Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
                     <div className="space-y-2">
                       <Label htmlFor="title">Title *</Label>
                       <Input

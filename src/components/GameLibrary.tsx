@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface GameLibraryProps {
   viewMode: ViewMode;
@@ -45,6 +46,7 @@ interface GameLibraryProps {
 
 export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChange }: GameLibraryProps) => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [games, setGames] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -186,14 +188,14 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   return (
     <div className="space-y-6">
       {/* Search and Filter Bar */}
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1">
+      <div className={`flex gap-4 items-center ${isMobile ? 'flex-col' : ''}`}>
+        <div className={`relative ${isMobile ? 'w-full' : 'flex-1'}`}>
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search games..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-10 bg-card border-border"
+            className={`pl-10 pr-10 bg-card border-border ${isMobile ? 'h-11' : ''}`}
           />
           {searchTerm && (
             <Button
@@ -209,10 +211,10 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
         <Button
           variant="outline"
           onClick={() => setShowFilters(!showFilters)}
-          className="border-border hover:bg-secondary/50"
+          className={`border-border hover:bg-secondary/50 ${isMobile ? 'w-full h-11' : ''}`}
         >
           <Filter className="h-4 w-4 mr-2" />
-          Filters
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
         </Button>
       </div>
 
@@ -327,6 +329,7 @@ interface GameListItemProps {
 const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) => {
   const { toast } = useToast();
   const { formatPrice } = useCurrency();
+  const isMobile = useIsMobile();
   
   const handleClone = () => {
     console.log("Clone game:", game.id);
@@ -417,6 +420,193 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
     }
   };
 
+  if (isMobile) {
+    return (
+      <div className="bg-card border border-border rounded-lg p-4 hover:bg-secondary/20 transition-colors space-y-3">
+        {/* Header row with image and action button */}
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <img 
+              src={game.cover_image || "/placeholder.svg"} 
+              alt={game.title}
+              className="w-12 h-16 object-contain bg-muted rounded"
+            />
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-base mb-1 truncate">{game.title}</h3>
+            <div className="text-sm text-muted-foreground">
+              {game.platform_info?.name}
+              {game.playthrough_platform_info?.name && game.playthrough_platform_info.name !== game.platform_info?.name && (
+                <> | {game.playthrough_platform_info.name}</>
+              )}
+            </div>
+          </div>
+          
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onEdit}
+            className="flex-shrink-0"
+          >
+            <Edit className="h-4 w-4 mr-1" />
+            Edit
+          </Button>
+        </div>
+
+        {/* Game info and badges */}
+        <div className="space-y-2">
+          {/* Info line */}
+          <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+            {viewMode === 'backlog' && (
+              <>
+                {game.estimated_duration && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {game.estimated_duration}h
+                  </span>
+                )}
+                {game.actual_playtime > 0 && (
+                  <span>Played: {game.actual_playtime}h</span>
+                )}
+                {game.achievements > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Trophy className="h-3 w-3" />
+                    {game.achievements}
+                  </span>
+                )}
+              </>
+            )}
+            
+            {viewMode === 'wishlist' && game.price && (
+              <span className="flex items-center gap-1">
+                <DollarSign className="h-3 w-3" />
+                {formatPrice(game.price)}
+              </span>
+            )}
+            
+            {viewMode === 'completed' && game.completion_date && (
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {new Date(game.completion_date).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+
+          {/* Status badges and comment */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex flex-wrap gap-1">
+              {game.is_currently_playing && (
+                <Badge variant="secondary" className="text-xs">
+                  <Play className="h-3 w-3 mr-1" />
+                  Playing
+                </Badge>
+              )}
+              {game.is_completed && (
+                <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Done
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {(viewMode !== 'backlog' && game.comment) && (
+            <div className="text-sm text-muted-foreground italic">
+              "{game.comment}"
+            </div>
+          )}
+        </div>
+
+        {/* Action buttons for mobile */}
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+          {viewMode === 'backlog' && !game.is_currently_playing && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleToggleCurrentlyPlaying}
+              className="flex-1 min-w-[120px]"
+            >
+              <Play className="h-3 w-3 mr-1" />
+              Start Playing
+            </Button>
+          )}
+          
+          {viewMode === 'backlog' && game.is_currently_playing && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleToggleCurrentlyPlaying}
+              className="flex-1 min-w-[120px]"
+            >
+              <Square className="h-3 w-3 mr-1" />
+              Stop Playing
+            </Button>
+          )}
+          
+          {viewMode === 'backlog' && !game.is_completed && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 min-w-[120px]"
+                >
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Mark Done
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Mark Game as Completed</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to mark "{game.title}" as completed? This will move it to your completed games list.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleMarkCompleted}>
+                    Mark Completed
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Game</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete "{game.title}"? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2 p-2 bg-card border border-border rounded hover:bg-secondary/20 transition-colors group">
       {/* Cover Image */}
@@ -438,7 +628,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               <span className="text-sm text-muted-foreground whitespace-nowrap">
                 {game.platform_info?.name}
                 {game.playthrough_platform_info?.name && game.playthrough_platform_info.name !== game.platform_info?.name && (
-                  <> | {game.playthrough_platform_info.name}</>
+                 <> | {game.playthrough_platform_info.name}</>
                 )}
               </span>
             </div>

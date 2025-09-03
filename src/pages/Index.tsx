@@ -7,6 +7,7 @@ import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Plus, FileSpreadsheet, Gamepad, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort';
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('backlog');
@@ -15,6 +16,7 @@ const Index = () => {
   const [editingGame, setEditingGame] = useState<any>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [listStats, setListStats] = useState({ count: 0, totalDuration: 0 });
+  const isMobile = useIsMobile();
   const {
     user,
     loading,
@@ -55,14 +57,11 @@ const Index = () => {
     return null; // Will redirect to auth
   }
   return <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 md:py-8">
         {/* Header */}
-        <div className="mb-8 flex justify-between items-start">
-          <div>
-            
-            
-          </div>
-          <div className="flex items-center gap-4">
+        <div className={`mb-6 flex ${isMobile ? 'flex-col gap-4' : 'justify-between items-start'}`}>
+          {!isMobile && <div></div>}
+          <div className={`flex items-center ${isMobile ? 'justify-between' : 'gap-4'}`}>
             <span className="text-sm text-muted-foreground">
               {user.email}
             </span>
@@ -75,10 +74,10 @@ const Index = () => {
         {/* Navigation */}
         <Navigation currentView={currentView} onViewChange={setCurrentView} />
 
-        {/* Add Game Button */}
-        <div className="flex justify-between items-center mb-6">
+        {/* Header and Actions */}
+        <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-center'} mb-6`}>
           <div>
-            <h2 className="text-2xl font-semibold capitalize">
+            <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold capitalize`}>
               {currentView === 'backlog' ? 'My Backlog' : currentView === 'wishlist' ? 'Wishlist' : currentView === 'tosort' ? 'To Sort' : 'Completed Games'}
             </h2>
             <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
@@ -94,16 +93,21 @@ const Index = () => {
               )}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className={`flex ${isMobile ? 'flex-col gap-3' : 'gap-2'}`}>
             <Button
               onClick={() => setShowImportExport(true)}
               variant="outline"
-              className="gap-2"
+              className={`gap-2 ${isMobile ? 'w-full justify-center h-11' : ''}`}
+              size={isMobile ? "default" : "default"}
             >
               <FileSpreadsheet className="h-4 w-4" />
               Import/Export
             </Button>
-            <Button onClick={handleAddGame} className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-hover transition-all duration-300">
+            <Button 
+              onClick={handleAddGame} 
+              className={`bg-primary hover:bg-primary/90 shadow-lg hover:shadow-hover transition-all duration-300 ${isMobile ? 'w-full justify-center h-11' : ''}`}
+              size={isMobile ? "default" : "default"}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add Game
             </Button>
