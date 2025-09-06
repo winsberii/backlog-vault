@@ -31,7 +31,6 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [platforms, setPlatforms] = useState<any[]>([]);
 
   const gameFields = [
     { key: "title", label: "Title", required: true },
@@ -69,9 +68,11 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
     Papa.parse(uploadedFile, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (header) => header.trim(),
       complete: (results) => {
+        console.log("CSV parsing complete:", results);
+        
         if (results.errors.length > 0) {
+          console.error("CSV parse errors:", results.errors);
           toast({
             title: "CSV Parse Error",
             description: results.errors[0].message,
@@ -85,22 +86,26 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
           row && Object.values(row).some(value => value && String(value).trim() !== '')
         );
 
+        console.log("Valid CSV data:", validData.length, "rows");
         setCsvData(validData);
-        setHeaders(Object.keys(validData[0] || {}));
         
-        // Auto-map fields based on common names
-        const autoMapping: Record<string, string> = {};
-        Object.keys(results.data[0] || {}).forEach(header => {
-          const lowerHeader = header.toLowerCase().replace(/[^a-z0-9]/g, '_');
-          const matchingField = gameFields.find(field => 
-            field.key.toLowerCase().includes(lowerHeader) || 
-            lowerHeader.includes(field.key.toLowerCase().replace('_', ''))
-          );
-          if (matchingField) {
-            autoMapping[header] = matchingField.key;
-          }
-        });
-        setFieldMapping(autoMapping);
+        if (validData.length > 0) {
+          setHeaders(Object.keys(validData[0] || {}));
+          
+          // Auto-map fields based on common names
+          const autoMapping: Record<string, string> = {};
+          Object.keys(validData[0] || {}).forEach(header => {
+            const lowerHeader = header.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const matchingField = gameFields.find(field => 
+              field.key.toLowerCase().includes(lowerHeader) || 
+              lowerHeader.includes(field.key.toLowerCase().replace('_', ''))
+            );
+            if (matchingField) {
+              autoMapping[header] = matchingField.key;
+            }
+          });
+          setFieldMapping(autoMapping);
+        }
 
         toast({
           title: "File Parsed",
@@ -108,6 +113,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
         });
       },
       error: (error) => {
+        console.error("Papa parse error:", error);
         toast({
           title: "Parse Error",
           description: error.message,
@@ -136,7 +142,9 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
 
     console.log("Starting import with user:", user?.id);
 
-    if (!fieldMapping.title) {
+    // Check if title field is mapped
+    const titleMapping = Object.entries(fieldMapping).find(([_, gameField]) => gameField === 'title');
+    if (!titleMapping) {
       toast({
         title: "Missing Required Field",
         description: "Title field mapping is required.",
@@ -163,9 +171,6 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
       
       console.log("Platforms fetched:", platformsData?.length || 0);
 
-      
-      setPlatforms(platformsData || []);
-
       const errors: string[] = [];
       let successCount = 0;
       let failedCount = 0;
@@ -176,15 +181,18 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
         try {
           const gameData: any = {
             user_id: user.id,
-            title: row[fieldMapping.title] || null,
           };
 
-          // Map other fields
+          // Map fields from CSV to game data
           Object.entries(fieldMapping).forEach(([csvHeader, gameField]) => {
-            if (gameField && gameField !== 'title' && row[csvHeader]) {
+            if (gameField && row[csvHeader] !== undefined && row[csvHeader] !== null) {
               const value = row[csvHeader];
               
               switch (gameField) {
+                case 'title':
+                  gameData.title = value;
+                  break;
+                  
                 case 'platform_name':
                   const platform = platformsData?.find(p => 
                     p.name.toLowerCase() === value.toLowerCase()
@@ -203,29 +211,29 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
                 case 'is_completed':
                 case 'needs_purchase':
                 case 'tosort':
-                  gameData[gameField] = value.toLowerCase() === 'true';
+                  gameData[gameField] = String(value).toLowerCase() === 'true';
                   break;
                 
                 case 'estimated_duration':
                 case 'actual_playtime':
                 case 'achievements':
-                  const numValue = parseInt(value);
+                  const numValue = parseInt(String(value));
                   if (!isNaN(numValue)) gameData[gameField] = numValue;
                   break;
                 
                 case 'price':
-                  const priceValue = parseFloat(value);
+                  const priceValue = parseFloat(String(value));
                   if (!isNaN(priceValue)) gameData[gameField] = priceValue;
                   break;
                 
                 case 'completion_date':
-                  if (value && new Date(value).toString() !== 'Invalid Date') {
-                    gameData[gameField] = value;
+                  if (value && new Date(String(value)).toString() !== 'Invalid Date') {
+                    gameData[gameField] = String(value);
                   }
                   break;
                 
                 default:
-                  gameData[gameField] = value;
+                  gameData[gameField] = String(value);
               }
             }
           });
@@ -236,7 +244,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
             continue;
           }
 
-          console.log("Inserting game data:", gameData);
+          console.log(`Inserting row ${i + 1}:`, gameData);
           
           const { error } = await supabase
             .from('games')
@@ -251,6 +259,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
             successCount++;
           }
         } catch (error: any) {
+          console.error(`Row ${i + 1} processing error:`, error);
           errors.push(`Row ${i + 1}: ${error.message}`);
           failedCount++;
         }
@@ -270,9 +279,16 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
           description: `Successfully imported ${successCount} games${failedCount > 0 ? `, ${failedCount} failed` : ''}.`,
         });
         onImportComplete?.();
+      } else {
+        toast({
+          title: "Import Failed",
+          description: "No games were imported successfully.",
+          variant: "destructive",
+        });
       }
 
     } catch (error: any) {
+      console.error("Import failed:", error);
       toast({
         title: "Import Failed",
         description: error.message,
@@ -347,7 +363,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
 
           <Button
             onClick={validateAndImport}
-            disabled={isUploading || !fieldMapping.title}
+            disabled={isUploading || !Object.values(fieldMapping).includes('title')}
             className="w-full"
           >
             <Upload className="h-4 w-4 mr-2" />
