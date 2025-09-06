@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
-import Papa from "papaparse";
+import * as Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -127,12 +127,14 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
   const validateAndImport = async () => {
     if (!user) {
       toast({
-        title: "Error",
-        description: "You must be logged in to import data.",
+        title: "Authentication Error",
+        description: "You must be logged in to import data. Please refresh the page and try again.",
         variant: "destructive",
       });
       return;
     }
+
+    console.log("Starting import with user:", user?.id);
 
     if (!fieldMapping.title) {
       toast({
@@ -148,14 +150,18 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
     setImportResult(null);
 
     try {
+      console.log("Fetching platforms...");
       // Fetch platforms for name-to-ID mapping
       const { data: platformsData, error: platformsError } = await supabase
         .from('platforms')
         .select('id, name');
       
       if (platformsError) {
+        console.error("Platform fetch error:", platformsError);
         throw new Error(`Failed to fetch platforms: ${platformsError.message}`);
       }
+      
+      console.log("Platforms fetched:", platformsData?.length || 0);
 
       
       setPlatforms(platformsData || []);
@@ -230,14 +236,18 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
             continue;
           }
 
+          console.log("Inserting game data:", gameData);
+          
           const { error } = await supabase
             .from('games')
             .insert([gameData]);
 
           if (error) {
+            console.error(`Row ${i + 1} insert error:`, error);
             errors.push(`Row ${i + 1}: ${error.message}`);
             failedCount++;
           } else {
+            console.log(`Row ${i + 1} inserted successfully`);
             successCount++;
           }
         } catch (error: any) {
