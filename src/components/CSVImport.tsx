@@ -40,7 +40,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
     { key: "is_currently_playing", label: "Currently Playing", required: false },
     { key: "is_completed", label: "Completed", required: false },
     { key: "needs_purchase", label: "Needs Purchase", required: false },
-    { key: "to_sort", label: "To Sort", required: false },
+    { key: "tosort", label: "To Sort", required: false },
     { key: "estimated_duration", label: "Estimated Duration (hours)", required: false },
     { key: "actual_playtime", label: "Actual Playtime (hours)", required: false },
     { key: "completion_date", label: "Completion Date", required: false },
@@ -149,9 +149,14 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
 
     try {
       // Fetch platforms for name-to-ID mapping
-      const { data: platformsData } = await supabase
+      const { data: platformsData, error: platformsError } = await supabase
         .from('platforms')
         .select('id, name');
+      
+      if (platformsError) {
+        throw new Error(`Failed to fetch platforms: ${platformsError.message}`);
+      }
+
       
       setPlatforms(platformsData || []);
 
@@ -192,7 +197,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
                 case 'is_completed':
                 case 'needs_purchase':
                 case 'tosort':
-                  gameData['to_sort'] = value.toLowerCase() === 'true';
+                  gameData[gameField] = value.toLowerCase() === 'true';
                   break;
                 
                 case 'estimated_duration':
