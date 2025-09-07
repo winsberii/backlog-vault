@@ -126,7 +126,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
   const handleFieldMapping = (csvHeader: string, gameField: string) => {
     setFieldMapping(prev => ({
       ...prev,
-      [csvHeader]: gameField
+      [csvHeader]: gameField === "skip" ? "" : gameField
     }));
   };
 
@@ -338,7 +338,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
                       <SelectValue placeholder="Select field" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Skip this column</SelectItem>
+                      <SelectItem value="skip">Skip this column</SelectItem>
                       {gameFields.map((field) => (
                         <SelectItem key={field.key} value={field.key}>
                           {field.label} {field.required && "*"}
