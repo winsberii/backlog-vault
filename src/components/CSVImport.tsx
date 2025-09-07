@@ -34,8 +34,8 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
 
   const gameFields = [
     { key: "title", label: "Title", required: true },
-    { key: "platform_name", label: "Platform Name", required: false },
-    { key: "playthrough_platform_name", label: "Playthrough Platform Name", required: false },
+    { key: "platform_name", label: "Platform Name", required: true },
+    { key: "playthrough_platform_name", label: "Playthrough Platform Name", required: true },
     { key: "is_currently_playing", label: "Currently Playing", required: false },
     { key: "is_completed", label: "Completed", required: false },
     { key: "needs_purchase", label: "Needs Purchase", required: false },
@@ -142,12 +142,16 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
 
     console.log("Starting import with user:", user?.id);
 
-    // Check if title field is mapped
-    const titleMapping = Object.entries(fieldMapping).find(([_, gameField]) => gameField === 'title');
-    if (!titleMapping) {
+    // Check if required fields are mapped
+    const requiredFields = ['title', 'platform_name', 'playthrough_platform_name'];
+    const missingFields = requiredFields.filter(field => 
+      !Object.values(fieldMapping).includes(field)
+    );
+    
+    if (missingFields.length > 0) {
       toast({
-        title: "Missing Required Field",
-        description: "Title field mapping is required.",
+        title: "Missing Required Fields",
+        description: `Please map these required fields: ${missingFields.join(', ')}`,
         variant: "destructive",
       });
       return;
@@ -363,7 +367,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
 
           <Button
             onClick={validateAndImport}
-            disabled={isUploading || !Object.values(fieldMapping).includes('title')}
+            disabled={isUploading || !['title', 'platform_name', 'playthrough_platform_name'].every(field => Object.values(fieldMapping).includes(field))}
             className="w-full"
           >
             <Upload className="h-4 w-4 mr-2" />
