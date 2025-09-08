@@ -1,4 +1,4 @@
-import { DollarSign } from "lucide-react";
+import { Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,7 +15,7 @@ export const CurrencySelector = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-9 w-9">
-          <DollarSign className="h-4 w-4" />
+          <Wallet className="h-4 w-4" />
           <span className="sr-only">Select currency</span>
         </Button>
       </DropdownMenuTrigger>
