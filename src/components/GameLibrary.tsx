@@ -25,6 +25,7 @@ import {
   Clock, 
   Calendar, 
   DollarSign,
+  Wallet,
   Copy,
   Trash2,
   Square,
@@ -480,7 +481,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             
             {viewMode === 'wishlist' && game.price && (
               <span className="flex items-center gap-1">
-                <DollarSign className="h-3 w-3" />
+                <Wallet className="h-3 w-3" />
                 {formatPrice(game.price)}
               </span>
             )}
@@ -657,7 +658,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               
               {viewMode === 'wishlist' && game.price && (
                 <span className="flex items-center gap-1">
-                  <DollarSign className="h-2.5 w-2.5" />
+                  <Wallet className="h-2.5 w-2.5" />
                   {formatPrice(game.price)}
                 </span>
               )}

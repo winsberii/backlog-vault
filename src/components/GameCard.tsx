@@ -21,6 +21,7 @@ import {
   Clock, 
   Calendar,
   DollarSign,
+  Wallet,
   CheckCircle 
 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -122,7 +123,7 @@ export const GameCard = ({ game, viewMode, onEdit, onDelete }: GameCardProps) =>
             <div className="flex justify-between">
               <span>Price:</span>
               <div className="flex items-center text-foreground">
-                <DollarSign className="h-3 w-3 mr-1" />
+                <Wallet className="h-3 w-3 mr-1" />
                 {formatPrice(game.price)}
               </div>
             </div>
