@@ -19,43 +19,21 @@ serve(async (req) => {
 
     console.log('Searching HowLongToBeat for:', gameTitle)
 
-    // Try the search API endpoint with correct format
-    const searchResponse = await fetch('https://howlongtobeat.com/api/search', {
+    // Use the correct search endpoint format
+    const searchResponse = await fetch('https://howlongtobeat.com/api/search/games', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Referer': 'https://howlongtobeat.com/',
-        'Origin': 'https://howlongtobeat.com'
+        'Origin': 'https://howlongtobeat.com',
+        'Accept': 'application/json'
       },
-      body: JSON.stringify([{
-        SearchType: "games",
-        SearchTerms: [gameTitle.trim()],
-        SearchPage: 1,
-        Size: 20,
-        SearchOptions: {
-          Games: {
-            UserId: 0,
-            Platform: "",
-            SortCategory: "popular",
-            RangeCategory: "main",
-            RangeTime: {
-              Min: null,
-              Max: null
-            },
-            Gameplay: {
-              Perspective: "",
-              Flow: "",
-              Genre: ""
-            },
-            RangeYear: {
-              Min: "",
-              Max: ""
-            },
-            Modifier: ""
-          }
-        }
-      }])
+      body: JSON.stringify({
+        searchTerms: [gameTitle.trim()],
+        searchPage: 1,
+        size: 20
+      })
     })
 
     console.log('API Response status:', searchResponse.status)
@@ -131,43 +109,78 @@ async function fallbackSearch(gameTitle: string) {
     console.log('Using fallback search method for:', gameTitle)
     
     // Try to fetch the search page directly and parse HTML
-    const searchUrl = `https://howlongtobeat.com/?q=${encodeURIComponent(gameTitle)}`
+    const searchUrl = `https://howlongtobeat.com/search?q=${encodeURIComponent(gameTitle)}`
+    console.log('Searching URL:', searchUrl)
+    
     const response = await fetch(searchUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Referer': 'https://howlongtobeat.com/'
       }
     })
 
     if (response.ok) {
       const html = await response.text()
+      console.log('HTML response length:', html.length)
       
-      // Look for game links in the HTML
+      // Look for search result links in the HTML with more specific patterns
       const gameLinks = []
-      const linkRegex = /href="\/game\/(\d+)"[^>]*>([^<]+)</g
-      let match
       
-      while ((match = linkRegex.exec(html)) !== null && gameLinks.length < 10) {
-        const gameId = match[1]
-        const gameTitle = match[2].trim()
+      // Try multiple regex patterns to catch different HTML structures
+      const patterns = [
+        /href="\/game\/(\d+)"[^>]*>([^<]+)/g,
+        /href="\/game\/(\d+)"[^>]*title="([^"]+)"/g,
+        /<a[^>]*href="\/game\/(\d+)"[^>]*>([^<]+)<\/a>/g,
+        /game_name[^>]*>([^<]+)<[^>]*href="\/game\/(\d+)"/g
+      ]
+      
+      for (const pattern of patterns) {
+        pattern.lastIndex = 0 // Reset regex
+        let match
         
-        if (gameId && gameTitle) {
-          gameLinks.push({
-            id: parseInt(gameId),
-            title: gameTitle,
-            url: `https://howlongtobeat.com/game/${gameId}`,
-            imageUrl: null,
-            mainStory: 0,
-            platforms: ''
-          })
+        while ((match = pattern.exec(html)) !== null && gameLinks.length < 10) {
+          const gameId = match[1]
+          const gameTitle = match[2]?.trim()
+          
+          // Skip if we already have this game or if title is empty/invalid
+          if (gameId && gameTitle && gameTitle.length > 1 && 
+              !gameLinks.some(g => g.id === parseInt(gameId))) {
+            gameLinks.push({
+              id: parseInt(gameId),
+              title: gameTitle,
+              url: `https://howlongtobeat.com/game/${gameId}`,
+              imageUrl: null,
+              mainStory: 0,
+              platforms: ''
+            })
+          }
         }
+        
+        if (gameLinks.length > 0) break // Stop if we found games
       }
 
       if (gameLinks.length > 0) {
         console.log('Found game links:', gameLinks)
+        
+        // Filter results to only include games that somewhat match the search term
+        const searchTermLower = gameTitle.toLowerCase()
+        const filteredGames = gameLinks.filter(game => 
+          game.title.toLowerCase().includes(searchTermLower) ||
+          searchTermLower.includes(game.title.toLowerCase()) ||
+          // Check for partial matches (e.g., "Halo" in "Halo 3")
+          searchTermLower.split(' ').some(term => 
+            game.title.toLowerCase().includes(term) && term.length > 2
+          )
+        )
+        
+        const finalGames = filteredGames.length > 0 ? filteredGames : gameLinks.slice(0, 5)
+        
         return new Response(
           JSON.stringify({
             success: true,
-            games: gameLinks
+            games: finalGames
           }),
           {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -177,23 +190,22 @@ async function fallbackSearch(gameTitle: string) {
       }
     }
 
-    // If HTML parsing fails, return a basic result
+    // If HTML parsing fails, return a search link
+    console.log('No games found in HTML, returning search link')
     const games = [{
       id: Math.floor(Math.random() * 100000),
       title: gameTitle,
-      url: `https://howlongtobeat.com/?q=${encodeURIComponent(gameTitle)}`,
+      url: `https://howlongtobeat.com/search?q=${encodeURIComponent(gameTitle)}`,
       imageUrl: null,
       mainStory: 0,
       platforms: ''
     }]
 
-    console.log('Fallback result:', games)
-
     return new Response(
       JSON.stringify({
         success: true,
         games: games,
-        note: 'Search functionality is currently limited. Please visit HowLongToBeat.com directly for detailed information.'
+        note: 'Direct search link provided. Click to search on HowLongToBeat.com'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
