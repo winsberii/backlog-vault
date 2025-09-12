@@ -19,45 +19,43 @@ serve(async (req) => {
 
     console.log('Searching HowLongToBeat for:', gameTitle)
 
-    // Try the main search API endpoint
+    // Try the search API endpoint with correct format
     const searchResponse = await fetch('https://howlongtobeat.com/api/search', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Referer': 'https://howlongtobeat.com/',
-        'Origin': 'https://howlongtobeat.com',
-        'Accept': 'application/json',
-        'Accept-Language': 'en-US,en;q=0.9'
+        'Origin': 'https://howlongtobeat.com'
       },
-      body: JSON.stringify({
-        searchType: "games",
-        searchTerms: gameTitle.trim().split(/\s+/),
-        searchPage: 1,
-        size: 20,
-        searchOptions: {
-          games: {
-            userId: 0,
-            platform: "",
-            sortCategory: "popular",
-            rangeCategory: "main",
-            rangeTime: {
-              min: null,
-              max: null
+      body: JSON.stringify([{
+        SearchType: "games",
+        SearchTerms: [gameTitle.trim()],
+        SearchPage: 1,
+        Size: 20,
+        SearchOptions: {
+          Games: {
+            UserId: 0,
+            Platform: "",
+            SortCategory: "popular",
+            RangeCategory: "main",
+            RangeTime: {
+              Min: null,
+              Max: null
             },
-            gameplay: {
-              perspective: "",
-              flow: "",
-              genre: ""
+            Gameplay: {
+              Perspective: "",
+              Flow: "",
+              Genre: ""
             },
-            rangeYear: {
-              min: "",
-              max: ""
+            RangeYear: {
+              Min: "",
+              Max: ""
             },
-            modifier: ""
+            Modifier: ""
           }
         }
-      })
+      }])
     })
 
     console.log('API Response status:', searchResponse.status)
@@ -72,13 +70,35 @@ serve(async (req) => {
     const searchData = await searchResponse.json()
     console.log('Search data received:', JSON.stringify(searchData, null, 2))
 
-    if (searchData && searchData.data && Array.isArray(searchData.data) && searchData.data.length > 0) {
-      const games = searchData.data.slice(0, 10).map((game: any) => ({
-        id: game.id,
-        title: game.game_name || game.name || 'Unknown Title',
-        url: `https://howlongtobeat.com/game/${game.id}`,
+    if (searchData && Array.isArray(searchData) && searchData.length > 0) {
+      const games = searchData.slice(0, 10).map((game: any) => ({
+        id: game.game_id,
+        title: game.game_name || 'Unknown Title',
+        url: `https://howlongtobeat.com/game/${game.game_id}`,
         imageUrl: game.game_image ? `https://howlongtobeat.com/games/${game.game_image}` : null,
-        mainStory: Math.round(game.comp_main / 3600) || 0, // Convert seconds to hours
+        mainStory: Math.round((game.comp_main || 0) / 3600) || 0, // Convert seconds to hours
+        platforms: game.profile_platform || ''
+      }))
+
+      console.log('Processed games:', games)
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          games: games
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      )
+    } else if (searchData && searchData.data && Array.isArray(searchData.data) && searchData.data.length > 0) {
+      const games = searchData.data.slice(0, 10).map((game: any) => ({
+        id: game.game_id || game.id,
+        title: game.game_name || game.name || 'Unknown Title',
+        url: `https://howlongtobeat.com/game/${game.game_id || game.id}`,
+        imageUrl: game.game_image ? `https://howlongtobeat.com/games/${game.game_image}` : null,
+        mainStory: Math.round((game.comp_main || 0) / 3600) || 0, // Convert seconds to hours
         platforms: game.profile_platform || game.platform || ''
       }))
 
@@ -110,7 +130,54 @@ async function fallbackSearch(gameTitle: string) {
   try {
     console.log('Using fallback search method for:', gameTitle)
     
-    // Create a simple search that returns a basic result
+    // Try to fetch the search page directly and parse HTML
+    const searchUrl = `https://howlongtobeat.com/?q=${encodeURIComponent(gameTitle)}`
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    })
+
+    if (response.ok) {
+      const html = await response.text()
+      
+      // Look for game links in the HTML
+      const gameLinks = []
+      const linkRegex = /href="\/game\/(\d+)"[^>]*>([^<]+)</g
+      let match
+      
+      while ((match = linkRegex.exec(html)) !== null && gameLinks.length < 10) {
+        const gameId = match[1]
+        const gameTitle = match[2].trim()
+        
+        if (gameId && gameTitle) {
+          gameLinks.push({
+            id: parseInt(gameId),
+            title: gameTitle,
+            url: `https://howlongtobeat.com/game/${gameId}`,
+            imageUrl: null,
+            mainStory: 0,
+            platforms: ''
+          })
+        }
+      }
+
+      if (gameLinks.length > 0) {
+        console.log('Found game links:', gameLinks)
+        return new Response(
+          JSON.stringify({
+            success: true,
+            games: gameLinks
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          }
+        )
+      }
+    }
+
+    // If HTML parsing fails, return a basic result
     const games = [{
       id: Math.floor(Math.random() * 100000),
       title: gameTitle,
