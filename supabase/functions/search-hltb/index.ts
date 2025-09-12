@@ -19,18 +19,20 @@ serve(async (req) => {
 
     console.log('Searching HowLongToBeat for:', gameTitle)
 
-    // Search HowLongToBeat using their search functionality
-    const searchUrl = `https://howlongtobeat.com/api/search/${encodeURIComponent(gameTitle)}`
+    // Search HowLongToBeat using their current API endpoint
+    const searchUrl = 'https://howlongtobeat.com/api/search'
     
     const searchResponse = await fetch(searchUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://howlongtobeat.com',
+        'Origin': 'https://howlongtobeat.com'
       },
       body: JSON.stringify({
         searchType: "games",
-        searchTerms: [gameTitle],
+        searchTerms: gameTitle.split(' '),
         searchPage: 1,
         size: 20,
         searchOptions: {
@@ -40,13 +42,17 @@ serve(async (req) => {
             sortCategory: "popular",
             rangeCategory: "main",
             rangeTime: {
-              min: 0,
-              max: 0
+              min: null,
+              max: null
             },
             gameplay: {
               perspective: "",
               flow: "",
               genre: ""
+            },
+            rangeYear: {
+              min: "",
+              max: ""
             },
             modifier: ""
           }
@@ -150,7 +156,7 @@ async function fallbackSearch(gameTitle: string) {
         games: games
       }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     )
@@ -164,7 +170,7 @@ async function fallbackSearch(gameTitle: string) {
         games: []
       }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
     )
