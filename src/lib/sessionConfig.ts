@@ -38,7 +38,7 @@ export interface SessionConfig {
  */
 export const defaultSessionConfig: SessionConfig = {
   checkInterval: 5,
-  inactivityTimeout: 60,
+  inactivityTimeout: 2880, // 2 days (2 * 24 * 60 minutes)
   warningBeforeExpiry: 5,
   showSessionStatus: false,
   activityEvents: [
