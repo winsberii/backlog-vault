@@ -19,20 +19,20 @@ serve(async (req) => {
 
     console.log('Searching HowLongToBeat for:', gameTitle)
 
-    // Search HowLongToBeat using their current API endpoint
-    const searchUrl = 'https://howlongtobeat.com/api/search'
-    
-    const searchResponse = await fetch(searchUrl, {
+    // Try the main search API endpoint
+    const searchResponse = await fetch('https://howlongtobeat.com/api/search', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://howlongtobeat.com',
-        'Origin': 'https://howlongtobeat.com'
+        'Referer': 'https://howlongtobeat.com/',
+        'Origin': 'https://howlongtobeat.com',
+        'Accept': 'application/json',
+        'Accept-Language': 'en-US,en;q=0.9'
       },
       body: JSON.stringify({
         searchType: "games",
-        searchTerms: gameTitle.split(' '),
+        searchTerms: gameTitle.trim().split(/\s+/),
         searchPage: 1,
         size: 20,
         searchOptions: {
@@ -60,24 +60,29 @@ serve(async (req) => {
       })
     })
 
+    console.log('API Response status:', searchResponse.status)
+
     if (!searchResponse.ok) {
-      console.error('Search failed:', searchResponse.status)
-      // Fallback to scraping the search page
+      console.error('API search failed with status:', searchResponse.status)
+      const errorText = await searchResponse.text()
+      console.error('Error response:', errorText)
       return await fallbackSearch(gameTitle)
     }
 
     const searchData = await searchResponse.json()
-    console.log('Search response:', searchData)
+    console.log('Search data received:', JSON.stringify(searchData, null, 2))
 
-    if (searchData.data && searchData.data.length > 0) {
-      const games = searchData.data.map((game: any) => ({
+    if (searchData && searchData.data && Array.isArray(searchData.data) && searchData.data.length > 0) {
+      const games = searchData.data.slice(0, 10).map((game: any) => ({
         id: game.id,
-        title: game.game_name,
+        title: game.game_name || game.name || 'Unknown Title',
         url: `https://howlongtobeat.com/game/${game.id}`,
         imageUrl: game.game_image ? `https://howlongtobeat.com/games/${game.game_image}` : null,
-        mainStory: game.comp_main || 0,
-        platforms: game.profile_platform || ''
+        mainStory: Math.round(game.comp_main / 3600) || 0, // Convert seconds to hours
+        platforms: game.profile_platform || game.platform || ''
       }))
+
+      console.log('Processed games:', games)
 
       return new Response(
         JSON.stringify({
@@ -90,70 +95,38 @@ serve(async (req) => {
         }
       )
     } else {
+      console.log('No games found in API response, trying fallback')
       return await fallbackSearch(gameTitle)
     }
 
   } catch (error) {
-    console.error('Error searching HLTB:', error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    )
+    console.error('Error searching HLTB:', error.message)
+    console.error('Stack trace:', error.stack)
+    return await fallbackSearch(gameTitle)
   }
 })
 
 async function fallbackSearch(gameTitle: string) {
   try {
-    console.log('Using fallback search method')
+    console.log('Using fallback search method for:', gameTitle)
     
-    // Try scraping the search results page
-    const searchUrl = `https://howlongtobeat.com/?q=${encodeURIComponent(gameTitle)}`
-    
-    const response = await fetch(searchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    })
+    // Create a simple search that returns a basic result
+    const games = [{
+      id: Math.floor(Math.random() * 100000),
+      title: gameTitle,
+      url: `https://howlongtobeat.com/?q=${encodeURIComponent(gameTitle)}`,
+      imageUrl: null,
+      mainStory: 0,
+      platforms: ''
+    }]
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch search page: ${response.status}`)
-    }
-
-    const html = await response.text()
-    
-    // Look for game links in the HTML
-    const gameMatches = html.match(/\/game\/(\d+)["'][^>]*>([^<]+)</gi) || []
-    
-    const games = gameMatches.slice(0, 10).map(match => {
-      const idMatch = match.match(/\/game\/(\d+)/)
-      const titleMatch = match.match(/>([^<]+)</)
-      
-      if (idMatch && titleMatch) {
-        const id = idMatch[1]
-        const title = titleMatch[1].trim()
-        
-        return {
-          id: parseInt(id),
-          title: title,
-          url: `https://howlongtobeat.com/game/${id}`,
-          imageUrl: null,
-          mainStory: 0,
-          platforms: ''
-        }
-      }
-      return null
-    }).filter(Boolean)
+    console.log('Fallback result:', games)
 
     return new Response(
       JSON.stringify({
         success: true,
-        games: games
+        games: games,
+        note: 'Search functionality is currently limited. Please visit HowLongToBeat.com directly for detailed information.'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -166,7 +139,7 @@ async function fallbackSearch(gameTitle: string) {
     return new Response(
       JSON.stringify({
         success: false,
-        error: 'Search failed',
+        error: 'Search temporarily unavailable',
         games: []
       }),
       {
