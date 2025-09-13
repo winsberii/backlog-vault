@@ -19,36 +19,59 @@ serve(async (req) => {
 
     console.log('Searching HowLongToBeat for:', gameTitle)
 
-    // Try multiple search approaches
-    const searchMethods = [
-      // Method 1: Try the search page with direct HTML parsing
-      async () => {
-        const searchUrl = `https://howlongtobeat.com/?q=${encodeURIComponent(gameTitle)}`
-        console.log('Trying search URL:', searchUrl)
-        
-        const response = await fetch(searchUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        })
-
-        if (response.ok) {
-          const html = await response.text()
-          return parseSearchResults(html, gameTitle)
+    // Try direct search page approach first (most reliable)
+    try {
+      const searchUrl = `https://howlongtobeat.com/?q=${encodeURIComponent(gameTitle.trim())}`
+      console.log('Searching URL:', searchUrl)
+      
+      const response = await fetch(searchUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1'
         }
-        return null
-      },
+      })
 
-      // Method 2: Try the games search endpoint
-      async () => {
-        console.log('Trying games search endpoint')
-        const searchUrl = `https://howlongtobeat.com/games?q=${encodeURIComponent(gameTitle)}`
+      if (response.ok) {
+        const html = await response.text()
+        console.log('HTML response received, length:', html.length)
         
-        const response = await fetch(searchUrl, {
+        const games = parseSearchResults(html, gameTitle)
+        
+        if (games && games.length > 0) {
+          console.log('Found games via direct search:', games)
+          return new Response(
+            JSON.stringify({
+              success: true,
+              games: games
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            }
+          )
+        }
+      } else {
+        console.log('Direct search failed with status:', response.status)
+      }
+    } catch (searchError) {
+      console.error('Direct search method failed:', searchError)
+    }
+
+    // If direct search fails, try alternative search URLs
+    const alternativeUrls = [
+      `https://howlongtobeat.com/search?q=${encodeURIComponent(gameTitle)}`,
+      `https://howlongtobeat.com/games?q=${encodeURIComponent(gameTitle)}`,
+    ]
+
+    for (const url of alternativeUrls) {
+      try {
+        console.log('Trying alternative URL:', url)
+        const response = await fetch(url, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -59,40 +82,33 @@ serve(async (req) => {
 
         if (response.ok) {
           const html = await response.text()
-          return parseSearchResults(html, gameTitle)
+          const games = parseSearchResults(html, gameTitle)
+          
+          if (games && games.length > 0) {
+            console.log('Found games via alternative URL:', games)
+            return new Response(
+              JSON.stringify({
+                success: true,
+                games: games
+              }),
+              {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200,
+              }
+            )
+          }
         }
-        return null
-      }
-    ]
-
-    // Try each search method until one works
-    for (const searchMethod of searchMethods) {
-      try {
-        const result = await searchMethod()
-        if (result && result.length > 0) {
-          console.log('Found games using search method:', result)
-          return new Response(
-            JSON.stringify({
-              success: true,
-              games: result
-            }),
-            {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200,
-            }
-          )
-        }
-      } catch (methodError) {
-        console.error('Search method failed:', methodError)
+      } catch (altError) {
+        console.error('Alternative URL failed:', altError)
         continue
       }
     }
 
-    // If all methods fail, return a helpful response
-    console.log('All search methods failed, returning manual search option')
+    // If all parsing fails, return a manual search option
+    console.log('All search methods failed, returning manual search link')
     const fallbackGame = {
       id: Date.now(),
-      title: `Search for "${gameTitle}" on HowLongToBeat`,
+      title: `Search "${gameTitle}" manually`,
       url: `https://howlongtobeat.com/?q=${encodeURIComponent(gameTitle)}`,
       imageUrl: null,
       mainStory: 0,
@@ -130,120 +146,117 @@ serve(async (req) => {
   }
 })
 
-// Enhanced HTML parsing function
+// Simplified and more reliable search approach
 function parseSearchResults(html: string, searchTerm: string): any[] {
   console.log('Parsing HTML for search results, length:', html.length)
+  console.log('Search term:', searchTerm)
   
   const games: any[] = []
-  const searchTermLower = searchTerm.toLowerCase()
+  const searchTermLower = searchTerm.toLowerCase().trim()
   
-  // Enhanced patterns to find game links and data
-  const patterns = [
-    // Pattern for game cards with data attributes
-    /<div[^>]*class="[^"]*search_list_details[^"]*"[^>]*>[\s\S]*?<a[^>]*href="\/game\/(\d+)"[^>]*title="([^"]*)"[\s\S]*?<\/div>/g,
-    
-    // Pattern for direct game links with titles
-    /<a[^>]*href="\/game\/(\d+)"[^>]*>[\s\S]*?<div[^>]*class="[^"]*search_list_details_block[^"]*"[^>]*>[\s\S]*?<h3[^>]*>([^<]+)<\/h3>/g,
-    
-    // Simple game link pattern
-    /<a[^>]*href="\/game\/(\d+)"[^>]*title="([^"]+)"/g,
-    
-    // Pattern for game names and IDs in search results
-    /data-game-id="(\d+)"[\s\S]*?<h3[^>]*>([^<]+)<\/h3>/g,
-    
-    // Alternative pattern for search list items
-    /<li[^>]*class="[^"]*back_darkish[^"]*"[^>]*>[\s\S]*?href="\/game\/(\d+)"[\s\S]*?>([^<]+)</g
-  ]
+  // Look for game links and extract titles from the surrounding context
+  // This pattern looks for URLs and then tries to find the game title nearby
+  const gameLinks = []
+  const urlPattern = /href="\/game\/(\d+)"/g
+  let match
   
-  for (const pattern of patterns) {
-    pattern.lastIndex = 0
-    let match
+  while ((match = urlPattern.exec(html)) !== null) {
+    const gameId = parseInt(match[1])
+    const linkPosition = match.index
     
-    while ((match = pattern.exec(html)) !== null && games.length < 15) {
-      const gameId = match[1]
-      let gameTitle = match[2]?.trim()
+    // Extract context around the link (500 characters before and after)
+    const contextStart = Math.max(0, linkPosition - 500)
+    const contextEnd = Math.min(html.length, linkPosition + 500)
+    const context = html.substring(contextStart, contextEnd)
+    
+    // Look for game titles in various formats within this context
+    const titlePatterns = [
+      /<h3[^>]*>([^<]+)<\/h3>/g,
+      /title="([^"]+)"/g,
+      /<div[^>]*class="[^"]*game[^"]*"[^>]*>([^<]+)<\/div>/g,
+      /<span[^>]*class="[^"]*title[^"]*"[^>]*>([^<]+)<\/span>/g,
+      /alt="([^"]+)"/g
+    ]
+    
+    let gameTitle = null
+    for (const titlePattern of titlePatterns) {
+      titlePattern.lastIndex = 0
+      const titleMatch = titlePattern.exec(context)
+      if (titleMatch && titleMatch[1] && titleMatch[1].trim().length > 2) {
+        gameTitle = titleMatch[1].trim()
+        break
+      }
+    }
+    
+    // If no title found in patterns, try to extract from nearby text
+    if (!gameTitle) {
+      // Look for text nodes that might contain the game title
+      const textPattern = />([^<]{3,50})</g
+      textPattern.lastIndex = 0
+      let textMatch
+      const potentialTitles = []
       
+      while ((textMatch = textPattern.exec(context)) !== null) {
+        const text = textMatch[1].trim()
+        if (text.length > 2 && text.length < 50 && !/^\d+$/.test(text) && !text.includes('href')) {
+          potentialTitles.push(text)
+        }
+      }
+      
+      // Pick the most likely title (longest reasonable string)
+      gameTitle = potentialTitles.reduce((best, current) => 
+        (!best || (current.length > best.length && current.length < 50)) ? current : best, null
+      )
+    }
+    
+    if (gameTitle && gameTitle.length > 2) {
       // Clean up the title
-      if (gameTitle) {
-        gameTitle = gameTitle.replace(/\s+/g, ' ').trim()
-        gameTitle = gameTitle.replace(/^[^\w]+|[^\w]+$/g, '') // Remove leading/trailing non-word chars
+      gameTitle = gameTitle.replace(/\s+/g, ' ').trim()
+      gameTitle = gameTitle.replace(/^[^\w\s]+|[^\w\s]+$/g, '') // Remove leading/trailing special chars
+      
+      // Check if this title is relevant to the search term
+      const titleLower = gameTitle.toLowerCase()
+      const isRelevant = titleLower.includes(searchTermLower) ||
+                        searchTermLower.includes(titleLower) ||
+                        searchTermLower.split(' ').some(term => 
+                          term.length > 2 && titleLower.includes(term)
+                        )
+      
+      if (isRelevant && !gameLinks.some(g => g.id === gameId)) {
+        gameLinks.push({
+          id: gameId,
+          title: gameTitle,
+          url: `https://howlongtobeat.com/game/${gameId}`,
+          imageUrl: null,
+          mainStory: 0,
+          platforms: ''
+        })
       }
-      
-      // Skip invalid entries
-      if (!gameId || !gameTitle || gameTitle.length < 2) continue
-      
-      // Skip duplicates
-      if (games.some(g => g.id === parseInt(gameId))) continue
-      
-      // Try to extract additional data from surrounding HTML
-      const gameData = {
-        id: parseInt(gameId),
-        title: gameTitle,
-        url: `https://howlongtobeat.com/game/${gameId}`,
-        imageUrl: null,
-        mainStory: 0,
-        platforms: ''
-      }
-      
-      // Try to extract image URL
-      const imgMatch = html.match(new RegExp(`game\/${gameId}[\\s\\S]*?<img[^>]*src="([^"]+)"`))
-      if (imgMatch && imgMatch[1]) {
-        gameData.imageUrl = imgMatch[1].startsWith('http') ? imgMatch[1] : `https://howlongtobeat.com${imgMatch[1]}`
-      }
-      
-      // Try to extract playtime
-      const timeMatch = html.match(new RegExp(`game\/${gameId}[\\s\\S]*?(\\d+)(?:\\s*½)?\\s*Hour`))
-      if (timeMatch && timeMatch[1]) {
-        gameData.mainStory = parseInt(timeMatch[1])
-      }
-      
-      games.push(gameData)
-    }
-    
-    if (games.length > 0) {
-      console.log(`Found ${games.length} games using pattern`)
-      break
     }
   }
   
-  if (games.length === 0) {
-    // Last resort: look for any game links in the page
-    const fallbackPattern = /href="\/game\/(\d+)"/g
-    const gameIds = new Set()
-    let match
+  // Sort by relevance (exact matches first, then partial matches)
+  gameLinks.sort((a, b) => {
+    const aLower = a.title.toLowerCase()
+    const bLower = b.title.toLowerCase()
     
-    while ((match = fallbackPattern.exec(html)) !== null && gameIds.size < 5) {
-      gameIds.add(match[1])
-    }
+    const aExact = aLower === searchTermLower
+    const bExact = bLower === searchTermLower
     
-    Array.from(gameIds).forEach((gameId: any) => {
-      games.push({
-        id: parseInt(gameId),
-        title: `Game ${gameId} (Click to view)`,
-        url: `https://howlongtobeat.com/game/${gameId}`,
-        imageUrl: null,
-        mainStory: 0,
-        platforms: ''
-      })
-    })
-  }
+    if (aExact && !bExact) return -1
+    if (!aExact && bExact) return 1
+    
+    const aContains = aLower.includes(searchTermLower)
+    const bContains = bLower.includes(searchTermLower)
+    
+    if (aContains && !bContains) return -1
+    if (!aContains && bContains) return 1
+    
+    return a.title.localeCompare(b.title)
+  })
   
-  // Filter results by relevance
-  if (games.length > 0) {
-    const relevantGames = games.filter(game => {
-      const titleLower = game.title.toLowerCase()
-      return titleLower.includes(searchTermLower) ||
-             searchTermLower.includes(titleLower) ||
-             searchTermLower.split(' ').some(term => 
-               titleLower.includes(term) && term.length > 2
-             )
-    })
-    
-    const finalGames = relevantGames.length > 0 ? relevantGames : games.slice(0, 8)
-    console.log(`Returning ${finalGames.length} filtered games:`, finalGames.map(g => g.title))
-    return finalGames
-  }
+  const finalResults = gameLinks.slice(0, 10)
+  console.log(`Found ${finalResults.length} relevant games:`, finalResults.map(g => `${g.title} (${g.id})`))
   
-  console.log('No games found in HTML parsing')
-  return []
+  return finalResults
 }
