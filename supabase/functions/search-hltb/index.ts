@@ -43,45 +43,38 @@ serve(async (req) => {
     const html = await response.text()
     console.log('HTML received, length:', html.length)
 
-    // Simple pattern to find game links - look for the most common pattern
+    // Find all game entries using multiple approaches
     const gameMatches = []
-    const gamePattern = /href="\/game\/(\d+)"[^>]*(?:title="([^"]*)")?/g
+    
+    // Method 1: Look for specific game card structures
+    const gameCardPattern = /<li[^>]*class="[^"]*back_primary[^"]*"[^>]*>.*?href="\/game\/(\d+)".*?<p[^>]*>([^<]+)<\/p>/gs
     let match
-
-    while ((match = gamePattern.exec(html)) !== null) {
+    
+    while ((match = gameCardPattern.exec(html)) !== null) {
       const gameId = parseInt(match[1])
-      let gameTitle = match[2] || null
+      let gameTitle = match[2].trim()
       
-      // If no title in the href, look for nearby title in the HTML context
-      if (!gameTitle) {
-        const contextStart = Math.max(0, match.index - 200)
-        const contextEnd = Math.min(html.length, match.index + 200)
-        const context = html.substring(contextStart, contextEnd)
-        
-        // Look for title patterns in the context
-        const titlePatterns = [
-          /<h3[^>]*>([^<]+)<\/h3>/,
-          /title="([^"]+)"/,
-          /<div[^>]*class="[^"]*title[^"]*"[^>]*>([^<]+)<\/div>/,
-          />([^<]{5,50})</
-        ]
-        
-        for (const titlePattern of titlePatterns) {
-          const titleMatch = context.match(titlePattern)
-          if (titleMatch && titleMatch[1] && titleMatch[1].trim().length > 3) {
-            gameTitle = titleMatch[1].trim()
-            break
-          }
-        }
+      if (gameTitle && gameTitle.length > 2 && !gameMatches.some(g => g.id === gameId)) {
+        gameMatches.push({
+          id: gameId,
+          title: gameTitle,
+          url: `https://howlongtobeat.com/game/${gameId}`,
+          imageUrl: null,
+          mainStory: 0,
+          platforms: ''
+        })
       }
-      
-      if (gameTitle && gameTitle.length > 2) {
-        // Clean up the title
-        gameTitle = gameTitle.replace(/\s+/g, ' ').trim()
-        gameTitle = gameTitle.replace(/^[^\w\s]+|[^\w\s]+$/g, '') // Remove leading/trailing special chars
+    }
+    
+    // Method 2: Alternative pattern for game links with titles
+    if (gameMatches.length === 0) {
+      const altPattern = /href="\/game\/(\d+)"[^>]*>.*?<p[^>]*title="([^"]*)"[^>]*>([^<]+)<\/p>/gs
+      while ((match = altPattern.exec(html)) !== null) {
+        const gameId = parseInt(match[1])
+        let gameTitle = match[3] || match[2]
+        gameTitle = gameTitle.trim()
         
-        // Check if already added
-        if (!gameMatches.some(g => g.id === gameId) && gameTitle.length > 2) {
+        if (gameTitle && gameTitle.length > 2 && !gameMatches.some(g => g.id === gameId)) {
           gameMatches.push({
             id: gameId,
             title: gameTitle,
@@ -91,6 +84,57 @@ serve(async (req) => {
             platforms: ''
           })
         }
+      }
+    }
+    
+    // Method 3: Fallback - look for any game links and extract context
+    if (gameMatches.length === 0) {
+      const basicPattern = /href="\/game\/(\d+)"/g
+      while ((match = basicPattern.exec(html)) !== null) {
+        const gameId = parseInt(match[1])
+        const contextStart = Math.max(0, match.index - 300)
+        const contextEnd = Math.min(html.length, match.index + 300)
+        const context = html.substring(contextStart, contextEnd)
+        
+        // Look for titles in various formats
+        const titlePatterns = [
+          /<p[^>]*>([^<]{3,60})<\/p>/g,
+          /<h\d[^>]*>([^<]{3,60})<\/h\d>/g,
+          /title="([^"]{3,60})"/g,
+          /<div[^>]*>([A-Za-z0-9][^<]{2,50})<\/div>/g
+        ]
+        
+        let gameTitle = null
+        for (const pattern of titlePatterns) {
+          let titleMatch
+          while ((titleMatch = pattern.exec(context)) !== null) {
+            const candidate = titleMatch[1].trim()
+            // Filter out obvious non-game-title text
+            if (candidate.length > 2 && 
+                !candidate.match(/^\d+$/) && 
+                !candidate.includes('http') &&
+                !candidate.includes('Hours') &&
+                !candidate.includes('Main') &&
+                candidate.match(/[A-Za-z]/)) {
+              gameTitle = candidate
+              break
+            }
+          }
+          if (gameTitle) break
+        }
+        
+        if (gameTitle && !gameMatches.some(g => g.id === gameId)) {
+          gameMatches.push({
+            id: gameId,
+            title: gameTitle,
+            url: `https://howlongtobeat.com/game/${gameId}`,
+            imageUrl: null,
+            mainStory: 0,
+            platforms: ''
+          })
+        }
+        
+        if (gameMatches.length >= 10) break // Limit results
       }
     }
 
