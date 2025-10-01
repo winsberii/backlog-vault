@@ -30,7 +30,8 @@ import {
   Trash2,
   Square,
   Trophy,
-  X
+  X,
+  SkipForward
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -97,6 +98,11 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   // Filter games based on view mode and filters
   const filteredGames = useMemo(() => {
     return games.filter((game) => {
+      // Skip filter - exclude skipped games from all lists
+      if (game.skipped) {
+        return false;
+      }
+
       // View mode filter
       let passesViewMode = false;
       switch (viewMode) {
@@ -421,6 +427,35 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
     }
   };
 
+  const handleSkip = async () => {
+    try {
+      const { error } = await supabase
+        .from('games')
+        .update({ 
+          skipped: new Date().toISOString().split('T')[0] // Today's date
+        })
+        .eq('id', game.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Game skipped",
+        description: `${game.title} has been removed from all lists.`,
+      });
+
+      await onRefresh();
+    } catch (error: any) {
+      console.error("Error skipping game:", error);
+      toast({
+        title: "Error",
+        description: "Failed to skip game. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isMobile) {
     return (
       <div className="bg-card border border-border rounded-lg p-4 hover:bg-secondary/20 transition-colors space-y-3">
@@ -573,6 +608,32 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               </AlertDialogContent>
             </AlertDialog>
           )}
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+              >
+                <SkipForward className="h-3 w-3 mr-1" />
+                Skip
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Skip Game</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to skip "{game.title}"? This will remove it from all lists.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSkip}>
+                  Skip
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -779,6 +840,33 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         >
           <Copy className="h-3 w-3" />
         </Button>
+        
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              title="Skip game"
+            >
+              <SkipForward className="h-3 w-3" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Skip Game</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to skip "{game.title}"? This will remove it from all lists.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSkip}>
+                Skip
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         
         <AlertDialog>
           <AlertDialogTrigger asChild>
