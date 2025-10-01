@@ -45,6 +45,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     estimatedDuration: game?.estimated_duration || "",
     actualPlaytime: game?.actual_playtime || "",
     completionDate: game?.completion_date || "",
+    skipped: game?.skipped || "",
     price: game?.price || "",
     comment: game?.comment || "",
     achievements: game?.achievements || "",
@@ -111,6 +112,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
         estimated_duration: formData.estimatedDuration ? parseInt(formData.estimatedDuration) : null,
         actual_playtime: formData.actualPlaytime ? parseInt(formData.actualPlaytime) : null,
         completion_date: formData.completionDate || null,
+        skipped: formData.skipped || null,
         price: formData.price ? parseFloat(formData.price) : null,
         comment: formData.comment || null,
         achievements: formData.achievements ? parseInt(formData.achievements) : null,
@@ -589,6 +591,17 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                       />
                     </div>
                   )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="skipped">Skipped Date</Label>
+                    <Input
+                      id="skipped"
+                      type="date"
+                      value={formData.skipped}
+                      onChange={(e) => handleInputChange("skipped", e.target.value)}
+                      className="bg-background border-border"
+                    />
+                  </div>
 
                   {formData.needsPurchase && (
                     <div className="space-y-2">
