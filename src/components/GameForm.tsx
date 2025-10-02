@@ -749,20 +749,6 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                          type="button"
                          variant="outline"
                          size="icon"
-                         onClick={handleSearchHLTB}
-                         disabled={isSearchingHLTB || !formData.title}
-                         title="Search for game on HowLongToBeat"
-                       >
-                         {isSearchingHLTB ? (
-                           <Loader2 className="h-4 w-4 animate-spin" />
-                         ) : (
-                           <Search className="h-4 w-4" />
-                         )}
-                       </Button>
-                       <Button
-                         type="button"
-                         variant="outline"
-                         size="icon"
                          onClick={handleFetchHLTBData}
                          disabled={isFetchingHLTB || !formData.howLongToBeatUrl}
                          title="Fetch cover art and duration from HowLongToBeat"
@@ -774,9 +760,6 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                          )}
                        </Button>
                      </div>
-                     {isSearchingHLTB && (
-                       <p className="text-sm text-muted-foreground">Searching HowLongToBeat...</p>
-                     )}
                      {isFetchingHLTB && (
                        <p className="text-sm text-muted-foreground">Fetching data from HowLongToBeat...</p>
                      )}
