@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ViewMode } from "@/pages/Index";
-import { Gamepad2, Heart, Trophy, Filter, Menu, X } from "lucide-react";
+import { Gamepad2, Heart, Trophy, Filter, Menu, X, SkipForward } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { CurrencySelector } from "./CurrencySelector";
 import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -31,6 +31,11 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
       key: 'completed' as ViewMode,
       label: 'Completed',
       icon: Trophy,
+    },
+    {
+      key: 'skipped' as ViewMode,
+      label: 'Skipped',
+      icon: SkipForward,
     },
     {
       key: 'tosort' as ViewMode,

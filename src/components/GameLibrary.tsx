@@ -98,25 +98,23 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   // Filter games based on view mode and filters
   const filteredGames = useMemo(() => {
     return games.filter((game) => {
-      // Skip filter - exclude skipped games from all lists
-      if (game.skipped) {
-        return false;
-      }
-
       // View mode filter
       let passesViewMode = false;
       switch (viewMode) {
         case 'backlog':
-          passesViewMode = !game.is_completed && !game.tosort;
+          passesViewMode = !game.is_completed && !game.tosort && !game.skipped;
           break;
         case 'wishlist':
-          passesViewMode = game.needs_purchase && !game.tosort;
+          passesViewMode = game.needs_purchase && !game.tosort && !game.skipped;
           break;
         case 'completed':
-          passesViewMode = game.is_completed && !game.tosort;
+          passesViewMode = game.is_completed && !game.tosort && !game.skipped;
           break;
         case 'tosort':
-          passesViewMode = game.tosort;
+          passesViewMode = game.tosort && !game.skipped;
+          break;
+        case 'skipped':
+          passesViewMode = !!game.skipped;
           break;
         default:
           passesViewMode = true;
@@ -156,6 +154,23 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
         } else if (a.completion_date && !b.completion_date) {
           return -1;
         } else if (!a.completion_date && b.completion_date) {
+          return 1;
+        }
+        // Secondary sort: Title (ascending) - alphabetical
+        return a.title.localeCompare(b.title);
+      }
+      
+      if (viewMode === 'skipped') {
+        // Sort by skipped date (descending) - most recent first
+        if (a.skipped && b.skipped) {
+          const dateA = new Date(a.skipped).getTime();
+          const dateB = new Date(b.skipped).getTime();
+          if (dateA !== dateB) {
+            return dateB - dateA;
+          }
+        } else if (a.skipped && !b.skipped) {
+          return -1;
+        } else if (!a.skipped && b.skipped) {
           return 1;
         }
         // Secondary sort: Title (ascending) - alphabetical

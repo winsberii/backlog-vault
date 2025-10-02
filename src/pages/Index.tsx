@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, FileSpreadsheet, Gamepad, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort';
+export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort' | 'skipped';
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('backlog');
   const [showGameForm, setShowGameForm] = useState(false);
@@ -78,7 +78,7 @@ const Index = () => {
         <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-center'} mb-6`}>
           <div>
             <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold capitalize`}>
-              {currentView === 'backlog' ? 'My Backlog' : currentView === 'wishlist' ? 'Wishlist' : currentView === 'tosort' ? 'To Sort' : 'Completed Games'}
+              {currentView === 'backlog' ? 'My Backlog' : currentView === 'wishlist' ? 'Wishlist' : currentView === 'tosort' ? 'To Sort' : currentView === 'skipped' ? 'Skipped Games' : 'Completed Games'}
             </h2>
             <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
               <span className="flex items-center gap-1">
