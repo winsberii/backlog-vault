@@ -34,6 +34,8 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [showSearchDialog, setShowSearchDialog] = useState(false);
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [activePlatforms, setActivePlatforms] = useState<any[]>([]);
+  const [duplicateGames, setDuplicateGames] = useState<any[]>([]);
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [formData, setFormData] = useState({
     title: game?.title || "",
     platform: game?.platform || "",
@@ -84,6 +86,38 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const checkForDuplicates = async (title: string) => {
+    if (!title.trim() || !user || game?.id) {
+      setDuplicateGames([]);
+      setShowDuplicateWarning(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .select('*')
+        .eq('user_id', user.id)
+        .ilike('title', title.trim());
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setDuplicateGames(data);
+        setShowDuplicateWarning(true);
+      } else {
+        setDuplicateGames([]);
+        setShowDuplicateWarning(false);
+      }
+    } catch (error) {
+      console.error('Error checking for duplicates:', error);
+    }
+  };
+
+  const handleTitleBlur = () => {
+    checkForDuplicates(formData.title);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -445,10 +479,17 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         id="title"
                         value={formData.title}
                         onChange={(e) => handleInputChange("title", e.target.value)}
+                        onBlur={handleTitleBlur}
                         placeholder="Game title"
                         required
                         className="bg-background border-border"
                       />
+                      {showDuplicateWarning && (
+                        <div className="bg-destructive/10 border border-destructive/50 text-destructive text-sm p-3 rounded-md">
+                          <p className="font-semibold">⚠️ Game already exists</p>
+                          <p className="mt-1">You already have {duplicateGames.length} game{duplicateGames.length > 1 ? 's' : ''} with this title in your library.</p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
