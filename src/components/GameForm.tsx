@@ -30,8 +30,11 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [isFetchingHLTB, setIsFetchingHLTB] = useState(false);
   const [isSearchingHLTB, setIsSearchingHLTB] = useState(false);
   const [isFetchingRA, setIsFetchingRA] = useState(false);
+  const [isSearchingBoxart, setIsSearchingBoxart] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [boxartResults, setBoxartResults] = useState<any[]>([]);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
+  const [showBoxartDialog, setShowBoxartDialog] = useState(false);
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [activePlatforms, setActivePlatforms] = useState<any[]>([]);
   const [duplicateGames, setDuplicateGames] = useState<any[]>([]);
@@ -439,6 +442,69 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     }
   };
 
+  const handleSearchBoxart = async () => {
+    if (!formData.title) {
+      toast({
+        title: "Error",
+        description: "Please enter a game title first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSearchingBoxart(true);
+
+    try {
+      // Get platform name
+      const platformName = platforms.find(p => p.id === formData.platform)?.name;
+
+      const { data, error } = await supabase.functions.invoke('search-libretro-boxart', {
+        body: { 
+          gameName: formData.title,
+          platformName: platformName,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setBoxartResults(data.results);
+        setShowBoxartDialog(true);
+        
+        if (data.results.length === 0) {
+          toast({
+            title: "No Results",
+            description: data.message || "No boxart found for this game",
+          });
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to search for boxart",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error searching boxart:", error);
+      toast({
+        title: "Error",
+        description: "Failed to search for boxart. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearchingBoxart(false);
+    }
+  };
+
+  const handleSelectBoxart = (imageUrl: string) => {
+    handleInputChange("coverImage", imageUrl);
+    setShowBoxartDialog(false);
+    toast({
+      title: "Success",
+      description: "Cover image updated",
+    });
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[95vh] m-2' : 'max-w-4xl max-h-[90vh]'} overflow-y-auto bg-card border-border`}>
@@ -735,12 +801,40 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
             <TabsContent value="integration" className="space-y-4">
               <Card>
-                <CardHeader>
-                  <CardTitle>External Integrations</CardTitle>
-                </CardHeader>
-                 <CardContent className="space-y-4">
-                   <div className="space-y-2">
-                     <Label htmlFor="retroAchievementUrl">RetroAchievements URL</Label>
+                 <CardHeader>
+                   <CardTitle>External Integrations</CardTitle>
+                 </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Libretro Boxart Search</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleSearchBoxart}
+                          disabled={isSearchingBoxart || !formData.title}
+                          className="w-full"
+                        >
+                          {isSearchingBoxart ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              Searching...
+                            </>
+                          ) : (
+                            <>
+                              <Search className="h-4 w-4 mr-2" />
+                              Search Cover Image
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Search for boxart from libretro-thumbnails repository
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="retroAchievementUrl">RetroAchievements URL</Label>
                      <div className="flex gap-2">
                        <Input
                          id="retroAchievementUrl"
@@ -860,6 +954,51 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSearchDialog(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Boxart Search Results Dialog */}
+      <Dialog open={showBoxartDialog} onOpenChange={setShowBoxartDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Libretro Boxart Search Results</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {boxartResults.map((result, index) => (
+              <div 
+                key={index}
+                className="flex flex-col items-center gap-2 p-4 border border-border rounded-lg hover:bg-secondary/20 cursor-pointer transition-colors"
+                onClick={() => handleSelectBoxart(result.url)}
+              >
+                <img 
+                  src={result.url} 
+                  alt={result.filename}
+                  className="w-full h-48 object-contain bg-muted rounded"
+                  onError={(e) => {
+                    e.currentTarget.src = '/placeholder.svg';
+                  }}
+                />
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground truncate w-full" title={result.filename}>
+                    {result.filename}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {result.system}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {boxartResults.length === 0 && (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                No boxart found. Try a different game title or platform.
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBoxartDialog(false)}>
               Cancel
             </Button>
           </DialogFooter>
