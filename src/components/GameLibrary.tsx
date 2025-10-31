@@ -507,6 +507,35 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
     }
   };
 
+  const handleToggleNeedsPurchase = async () => {
+    try {
+      const { error } = await supabase
+        .from('games')
+        .update({ 
+          needs_purchase: !game.needs_purchase
+        })
+        .eq('id', game.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: game.needs_purchase ? "Removed from Wishlist" : "Added to Wishlist",
+        description: `${game.title} has been ${game.needs_purchase ? 'removed from' : 'added to'} the wishlist.`,
+      });
+
+      await onRefresh();
+    } catch (error: any) {
+      console.error("Error toggling needs purchase status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update needs purchase status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isMobile) {
     return (
       <div className="bg-card border border-border rounded-lg p-4 hover:bg-secondary/20 transition-colors space-y-3">
@@ -700,18 +729,21 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
                 More
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover">
-              <DropdownMenuItem onClick={handleToggleToSort}>
-                {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={handleSkip}
-                className="text-orange-600 focus:text-orange-600"
-              >
-                <SkipForward className="h-3 w-3 mr-2" />
-                Skip game
-              </DropdownMenuItem>
-            </DropdownMenuContent>
+          <DropdownMenuContent align="end" className="bg-popover">
+            <DropdownMenuItem onClick={handleToggleToSort}>
+              {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleToggleNeedsPurchase}>
+              {game.needs_purchase ? "Remove from Wishlist" : "Add to Wishlist"}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={handleSkip}
+              className="text-orange-600 focus:text-orange-600"
+            >
+              <SkipForward className="h-3 w-3 mr-2" />
+              Skip game
+            </DropdownMenuItem>
+          </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
@@ -951,6 +983,9 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
           <DropdownMenuContent align="end" className="bg-popover">
             <DropdownMenuItem onClick={handleToggleToSort}>
               {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleToggleNeedsPurchase}>
+              {game.needs_purchase ? "Remove from Wishlist" : "Add to Wishlist"}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleClone}>
               <Copy className="h-3 w-3 mr-2" />
