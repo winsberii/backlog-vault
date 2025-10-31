@@ -660,30 +660,6 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             </AlertDialog>
           )}
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-              >
-                <MoreVertical className="h-3 w-3 mr-1" />
-                More
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover">
-              <DropdownMenuItem onClick={handleToggleToSort}>
-                {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={handleSkip}
-                className="text-orange-600 focus:text-orange-600"
-              >
-                <SkipForward className="h-3 w-3 mr-2" />
-                Skip game
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -713,6 +689,30 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+              >
+                <MoreVertical className="h-3 w-3 mr-1" />
+                More
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover">
+              <DropdownMenuItem onClick={handleToggleToSort}>
+                {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleSkip}
+                className="text-orange-600 focus:text-orange-600"
+              >
+                <SkipForward className="h-3 w-3 mr-2" />
+                Skip game
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     );
@@ -880,28 +880,6 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
           </AlertDialog>
         )}
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0"
-              title="More options"
-            >
-              <MoreVertical className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-popover">
-            <DropdownMenuItem onClick={handleToggleToSort}>
-              {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleClone}>
-              <Copy className="h-3 w-3 mr-2" />
-              Clone game
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
@@ -958,6 +936,28 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              title="More options"
+            >
+              <MoreVertical className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover">
+            <DropdownMenuItem onClick={handleToggleToSort}>
+              {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleClone}>
+              <Copy className="h-3 w-3 mr-2" />
+              Clone game
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
