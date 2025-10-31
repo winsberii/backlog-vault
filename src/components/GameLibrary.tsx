@@ -601,11 +601,21 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               </span>
             )}
             
-            {viewMode === 'completed' && game.completion_date && (
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {new Date(game.completion_date).toLocaleDateString()}
-              </span>
+            {viewMode === 'completed' && (
+              <>
+                {game.completion_date && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(game.completion_date).toLocaleDateString()}
+                  </span>
+                )}
+                {game.estimated_duration && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {game.estimated_duration}h
+                  </span>
+                )}
+              </>
             )}
           </div>
 
@@ -805,11 +815,21 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
                 </span>
               )}
               
-              {viewMode === 'completed' && game.completion_date && (
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-2.5 w-2.5" />
-                  {new Date(game.completion_date).toLocaleDateString()}
-                </span>
+              {viewMode === 'completed' && (
+                <>
+                  {game.completion_date && (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-2.5 w-2.5" />
+                      {new Date(game.completion_date).toLocaleDateString()}
+                    </span>
+                  )}
+                  {game.estimated_duration && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-2.5 w-2.5" />
+                      {game.estimated_duration}h
+                    </span>
+                  )}
+                </>
               )}
               
               {viewMode !== 'backlog' && game.comment && (
