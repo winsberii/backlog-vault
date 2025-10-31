@@ -16,6 +16,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   Search, 
   Filter, 
@@ -31,7 +37,8 @@ import {
   Square,
   Trophy,
   X,
-  SkipForward
+  SkipForward,
+  MoreVertical
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -471,6 +478,35 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
     }
   };
 
+  const handleToggleToSort = async () => {
+    try {
+      const { error } = await supabase
+        .from('games')
+        .update({ 
+          tosort: !game.tosort
+        })
+        .eq('id', game.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: game.tosort ? "Removed from To Sort" : "Added to To Sort",
+        description: `${game.title} has been ${game.tosort ? 'removed from' : 'added to'} the To Sort list.`,
+      });
+
+      await onRefresh();
+    } catch (error: any) {
+      console.error("Error toggling tosort status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update tosort status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isMobile) {
     return (
       <div className="bg-card border border-border rounded-lg p-4 hover:bg-secondary/20 transition-colors space-y-3">
@@ -624,31 +660,29 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             </AlertDialog>
           )}
           
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
                 variant="outline"
               >
-                <SkipForward className="h-3 w-3 mr-1" />
-                Skip
+                <MoreVertical className="h-3 w-3 mr-1" />
+                More
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Skip Game</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to skip "{game.title}"? This will remove it from all lists.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleSkip}>
-                  Skip
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover">
+              <DropdownMenuItem onClick={handleToggleToSort}>
+                {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleSkip}
+                className="text-orange-600 focus:text-orange-600"
+              >
+                <SkipForward className="h-3 w-3 mr-2" />
+                Skip game
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -846,15 +880,27 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
           </AlertDialog>
         )}
         
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={handleClone}
-          className="h-6 w-6 p-0"
-          title="Clone game"
-        >
-          <Copy className="h-3 w-3" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              title="More options"
+            >
+              <MoreVertical className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover">
+            <DropdownMenuItem onClick={handleToggleToSort}>
+              {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleClone}>
+              <Copy className="h-3 w-3 mr-2" />
+              Clone game
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         
         <AlertDialog>
           <AlertDialogTrigger asChild>
