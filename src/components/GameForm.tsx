@@ -31,10 +31,14 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [isSearchingHLTB, setIsSearchingHLTB] = useState(false);
   const [isFetchingRA, setIsFetchingRA] = useState(false);
   const [isSearchingBoxart, setIsSearchingBoxart] = useState(false);
+  const [isBrowsingBoxart, setIsBrowsingBoxart] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [boxartResults, setBoxartResults] = useState<any[]>([]);
+  const [browseBoxartResults, setBrowseBoxartResults] = useState<any[]>([]);
+  const [selectedBrowsePlatform, setSelectedBrowsePlatform] = useState("");
   const [showSearchDialog, setShowSearchDialog] = useState(false);
   const [showBoxartDialog, setShowBoxartDialog] = useState(false);
+  const [showBrowseDialog, setShowBrowseDialog] = useState(false);
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [activePlatforms, setActivePlatforms] = useState<any[]>([]);
   const [duplicateGames, setDuplicateGames] = useState<any[]>([]);
@@ -505,6 +509,72 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     });
   };
 
+  const handleBrowseBoxart = () => {
+    setShowBrowseDialog(true);
+  };
+
+  const handleBrowsePlatformChange = async (platformId: string) => {
+    setSelectedBrowsePlatform(platformId);
+    
+    if (!platformId) {
+      setBrowseBoxartResults([]);
+      return;
+    }
+
+    setIsBrowsingBoxart(true);
+
+    try {
+      const platformName = platforms.find(p => p.id === platformId)?.name;
+
+      const { data, error } = await supabase.functions.invoke('search-libretro-boxart', {
+        body: { 
+          gameName: "*",  // Special character to indicate we want all results
+          platformName: platformName,
+          browseMode: true,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setBrowseBoxartResults(data.results);
+        
+        if (data.results.length === 0) {
+          toast({
+            title: "No Results",
+            description: "No boxart found for this platform",
+          });
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to browse boxart",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error browsing boxart:", error);
+      toast({
+        title: "Error",
+        description: "Failed to browse boxart. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBrowsingBoxart(false);
+    }
+  };
+
+  const handleSelectBrowseBoxart = (imageUrl: string) => {
+    handleInputChange("coverImage", imageUrl);
+    setShowBrowseDialog(false);
+    setBrowseBoxartResults([]);
+    setSelectedBrowsePlatform("");
+    toast({
+      title: "Success",
+      description: "Cover image updated",
+    });
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[95vh] m-2' : 'max-w-4xl max-h-[90vh]'} overflow-y-auto bg-card border-border`}>
@@ -806,14 +876,14 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                  </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Libretro Boxart Search</Label>
+                      <Label>Libretro Boxart</Label>
                       <div className="flex gap-2">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={handleSearchBoxart}
                           disabled={isSearchingBoxart || !formData.title}
-                          className="w-full"
+                          className="flex-1"
                         >
                           {isSearchingBoxart ? (
                             <>
@@ -823,13 +893,21 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                           ) : (
                             <>
                               <Search className="h-4 w-4 mr-2" />
-                              Search Cover Image
+                              Search
                             </>
                           )}
                         </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleBrowseBoxart}
+                          className="flex-1"
+                        >
+                          Browse Repository
+                        </Button>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Search for boxart from libretro-thumbnails repository
+                        Search by game name or browse the libretro-thumbnails repository
                       </p>
                     </div>
 
@@ -999,6 +1077,77 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowBoxartDialog(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Browse Boxart Dialog */}
+      <Dialog open={showBrowseDialog} onOpenChange={setShowBrowseDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Browse Libretro Boxart Repository</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select Platform</Label>
+              <Select value={selectedBrowsePlatform} onValueChange={handleBrowsePlatformChange}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue placeholder="Choose a platform to browse" />
+                </SelectTrigger>
+                <SelectContent>
+                  {platforms.map((platform) => (
+                    <SelectItem key={platform.id} value={platform.id}>
+                      {platform.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {isBrowsingBoxart ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {browseBoxartResults.length > 0 ? (
+                  browseBoxartResults.map((result, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-col items-center gap-2 p-4 border border-border rounded-lg hover:bg-secondary/20 cursor-pointer transition-all"
+                      onClick={() => handleSelectBrowseBoxart(result.url)}
+                    >
+                      <img
+                        src={result.url}
+                        alt={result.filename}
+                        className="w-full h-48 object-contain bg-muted rounded"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.svg';
+                        }}
+                      />
+                      <div className="text-center">
+                        <p className="text-xs truncate w-full" title={result.filename}>
+                          {result.filename}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : selectedBrowsePlatform ? (
+                  <div className="col-span-full text-center py-8 text-muted-foreground">
+                    No boxart available for this platform.
+                  </div>
+                ) : (
+                  <div className="col-span-full text-center py-8 text-muted-foreground">
+                    Select a platform to browse available boxart
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBrowseDialog(false)}>
               Cancel
             </Button>
           </DialogFooter>

@@ -6,8 +6,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { gameName, platformName } = await req.json();
-    console.log('Searching for boxart:', { gameName, platformName });
+    const { gameName, platformName, browseMode } = await req.json();
+    console.log('Searching for boxart:', { gameName, platformName, browseMode });
 
     if (!gameName) {
       return new Response(
@@ -64,44 +64,85 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Search for the game in the Named_Boxarts folder
-    const baseUrl = `https://raw.githubusercontent.com/libretro-thumbnails/libretro-thumbnails/master/${systemName}/Named_Boxarts`;
-    
-    // Try to find exact match first
-    const cleanGameName = gameName.trim();
-    const possibleFilenames = [
-      `${cleanGameName}.png`,
-      `${cleanGameName} (USA).png`,
-      `${cleanGameName} (Europe).png`,
-      `${cleanGameName} (Japan).png`,
-      `${cleanGameName} (World).png`,
-    ];
-
     const results = [];
+    const cleanGameName = gameName.trim();
     
-    for (const filename of possibleFilenames) {
-      const imageUrl = `${baseUrl}/${encodeURIComponent(filename)}`;
+    // If browse mode or wildcard search, fetch directory listing
+    if (browseMode || gameName === "*") {
+      console.log('Browse mode: fetching directory listing...');
+      const apiUrl = `https://api.github.com/repos/libretro-thumbnails/libretro-thumbnails/contents/${systemName}/Named_Boxarts`;
       
       try {
-        // Check if the image exists
-        const response = await fetch(imageUrl, { method: 'HEAD' });
-        console.log(`Checking ${filename}: ${response.status}`);
+        const response = await fetch(apiUrl, {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'Supabase-Function',
+          },
+        });
+
+        console.log(`GitHub API response: ${response.status}`);
+
         if (response.ok) {
-          console.log(`Found match: ${filename}`);
-          results.push({
-            filename,
-            url: imageUrl,
-            system: systemName.replace(/_/g, ' '),
-          });
+          const files = await response.json();
+          console.log(`Found ${files.length} files in directory`);
+          
+          // Return all PNG files (limited to 100)
+          const allFiles = files
+            .filter((file: any) => file.name.endsWith('.png'))
+            .slice(0, 100)
+            .map((file: any) => ({
+              filename: file.name,
+              url: file.download_url,
+              system: systemName.replace(/_/g, ' '),
+            }));
+
+          console.log(`Returning ${allFiles.length} files`);
+          results.push(...allFiles);
+        } else {
+          console.error(`GitHub API error: ${response.status} ${response.statusText}`);
+          const errorText = await response.text();
+          console.error('Error details:', errorText);
         }
       } catch (error) {
-        // Continue to next filename
-        console.log(`Image not found: ${filename}`, error);
+        console.error('Error fetching directory listing:', error);
+      }
+    } else {
+      // Search for the game in the Named_Boxarts folder
+      const baseUrl = `https://raw.githubusercontent.com/libretro-thumbnails/libretro-thumbnails/master/${systemName}/Named_Boxarts`;
+      
+      // Try to find exact match first
+      const possibleFilenames = [
+        `${cleanGameName}.png`,
+        `${cleanGameName} (USA).png`,
+        `${cleanGameName} (Europe).png`,
+        `${cleanGameName} (Japan).png`,
+        `${cleanGameName} (World).png`,
+      ];
+      
+      for (const filename of possibleFilenames) {
+        const imageUrl = `${baseUrl}/${encodeURIComponent(filename)}`;
+        
+        try {
+          // Check if the image exists
+          const response = await fetch(imageUrl, { method: 'HEAD' });
+          console.log(`Checking ${filename}: ${response.status}`);
+          if (response.ok) {
+            console.log(`Found match: ${filename}`);
+            results.push({
+              filename,
+              url: imageUrl,
+              system: systemName.replace(/_/g, ' '),
+            });
+          }
+        } catch (error) {
+          // Continue to next filename
+          console.log(`Image not found: ${filename}`, error);
+        }
       }
     }
 
-    // If no exact matches, try to fetch the directory listing
-    if (results.length === 0) {
+    // If no exact matches and not browse mode, try fuzzy search in directory
+    if (results.length === 0 && !browseMode && gameName !== "*") {
       console.log('No exact matches, trying directory listing...');
       // GitHub API to list files in directory
       const apiUrl = `https://api.github.com/repos/libretro-thumbnails/libretro-thumbnails/contents/${systemName}/Named_Boxarts`;
