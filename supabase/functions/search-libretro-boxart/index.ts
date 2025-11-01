@@ -7,6 +7,7 @@ Deno.serve(async (req) => {
 
   try {
     const { gameName, platformName } = await req.json();
+    console.log('Searching for boxart:', { gameName, platformName });
 
     if (!gameName) {
       return new Response(
@@ -46,8 +47,10 @@ Deno.serve(async (req) => {
     };
 
     const systemName = platformName ? platformMapping[platformName] : null;
+    console.log('Platform mapping:', { platformName, systemName });
 
     if (!systemName) {
+      console.log('Platform not supported:', platformName);
       return new Response(
         JSON.stringify({ 
           success: true,
@@ -82,7 +85,9 @@ Deno.serve(async (req) => {
       try {
         // Check if the image exists
         const response = await fetch(imageUrl, { method: 'HEAD' });
+        console.log(`Checking ${filename}: ${response.status}`);
         if (response.ok) {
+          console.log(`Found match: ${filename}`);
           results.push({
             filename,
             url: imageUrl,
@@ -91,12 +96,13 @@ Deno.serve(async (req) => {
         }
       } catch (error) {
         // Continue to next filename
-        console.log(`Image not found: ${filename}`);
+        console.log(`Image not found: ${filename}`, error);
       }
     }
 
     // If no exact matches, try to fetch the directory listing
     if (results.length === 0) {
+      console.log('No exact matches, trying directory listing...');
       // GitHub API to list files in directory
       const apiUrl = `https://api.github.com/repos/libretro-thumbnails/libretro-thumbnails/contents/${systemName}/Named_Boxarts`;
       
@@ -108,8 +114,11 @@ Deno.serve(async (req) => {
           },
         });
 
+        console.log(`GitHub API response: ${response.status}`);
+
         if (response.ok) {
           const files = await response.json();
+          console.log(`Found ${files.length} files in directory`);
           
           // Filter files that match the game name (case insensitive)
           const searchTerm = cleanGameName.toLowerCase();
@@ -125,13 +134,19 @@ Deno.serve(async (req) => {
               system: systemName.replace(/_/g, ' '),
             }));
 
+          console.log(`Found ${matchingFiles.length} matching files`);
           results.push(...matchingFiles);
+        } else {
+          console.error(`GitHub API error: ${response.status} ${response.statusText}`);
+          const errorText = await response.text();
+          console.error('Error details:', errorText);
         }
       } catch (error) {
         console.error('Error fetching directory listing:', error);
       }
     }
 
+    console.log(`Returning ${results.length} results`);
     return new Response(
       JSON.stringify({ 
         success: true,
