@@ -43,6 +43,32 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [activePlatforms, setActivePlatforms] = useState<any[]>([]);
   const [duplicateGames, setDuplicateGames] = useState<any[]>([]);
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  
+  // Platforms available in libretro-thumbnails
+  const libretroAvailablePlatforms = [
+    'Game Boy Advance',
+    'Nintendo 3DS',
+    'Nintendo DS',
+    'Nintendo Switch',
+    'PlayStation',
+    'PlayStation 2',
+    'PlayStation 3',
+    'PlayStation 4',
+    'PlayStation 5',
+    'PlayStation Portable',
+    'PlayStation Vita',
+    'Xbox',
+    'Xbox 360',
+    'Xbox One',
+    'Wii',
+    'Wii U',
+    'GameCube',
+    'N64',
+    'SNES',
+    'NES',
+    'Sega Genesis',
+    'Sega Dreamcast',
+  ];
   const [formData, setFormData] = useState({
     title: game?.title || "",
     platform: game?.platform || "",
@@ -1097,11 +1123,13 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                   <SelectValue placeholder="Choose a platform to browse" />
                 </SelectTrigger>
                 <SelectContent>
-                  {platforms.map((platform) => (
-                    <SelectItem key={platform.id} value={platform.id}>
-                      {platform.name}
-                    </SelectItem>
-                  ))}
+                  {platforms
+                    .filter((platform) => libretroAvailablePlatforms.includes(platform.name))
+                    .map((platform) => (
+                      <SelectItem key={platform.id} value={platform.id}>
+                        {platform.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
