@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { isValid, parse, format } from "date-fns";
 
 interface ImportResult {
   success: number;
@@ -58,13 +59,50 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
     { key: "tosort", label: "To Sort", required: false },
     { key: "estimated_duration", label: "Estimated Duration (hours)", required: false },
     { key: "actual_playtime", label: "Actual Playtime (hours)", required: false },
-    { key: "completion_date", label: "Completion Date", required: false },
+    { key: "completion_date", label: "Completion Date (YYYY-MM-DD)", required: false },
     { key: "price", label: "Price", required: false },
     { key: "achievements", label: "Achievements", required: false },
     { key: "comment", label: "Comment", required: false },
     { key: "retro_achievement_url", label: "RetroAchievements URL", required: false },
     { key: "how_long_to_beat_url", label: "HowLongToBeat URL", required: false },
   ];
+
+  const validateDate = (dateString: string): { valid: boolean; date?: string; error?: string } => {
+    if (!dateString || String(dateString).trim() === '') {
+      return { valid: true }; // Empty dates are allowed
+    }
+
+    const dateStr = String(dateString).trim();
+    
+    // Try parsing as YYYY-MM-DD (ISO format - preferred)
+    let parsedDate = parse(dateStr, 'yyyy-MM-dd', new Date());
+    if (isValid(parsedDate)) {
+      return { valid: true, date: format(parsedDate, 'yyyy-MM-dd') };
+    }
+
+    // Try parsing as MM/DD/YYYY
+    parsedDate = parse(dateStr, 'MM/dd/yyyy', new Date());
+    if (isValid(parsedDate)) {
+      return { valid: true, date: format(parsedDate, 'yyyy-MM-dd') };
+    }
+
+    // Try parsing as DD/MM/YYYY
+    parsedDate = parse(dateStr, 'dd/MM/yyyy', new Date());
+    if (isValid(parsedDate)) {
+      return { valid: true, date: format(parsedDate, 'yyyy-MM-dd') };
+    }
+
+    // Try parsing as M/D/YYYY (single digit month/day)
+    parsedDate = parse(dateStr, 'M/d/yyyy', new Date());
+    if (isValid(parsedDate)) {
+      return { valid: true, date: format(parsedDate, 'yyyy-MM-dd') };
+    }
+
+    return { 
+      valid: false, 
+      error: `Invalid date format: "${dateStr}". Expected YYYY-MM-DD (e.g., 2024-01-15) or MM/DD/YYYY or DD/MM/YYYY` 
+    };
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = e.target.files?.[0];
@@ -290,8 +328,13 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
                   break;
                 
                 case 'completion_date':
-                  if (value && new Date(String(value)).toString() !== 'Invalid Date') {
-                    gameData[gameField] = String(value);
+                  if (value) {
+                    const dateValidation = validateDate(String(value));
+                    if (dateValidation.valid && dateValidation.date) {
+                      gameData[gameField] = dateValidation.date;
+                    } else if (!dateValidation.valid) {
+                      throw new Error(dateValidation.error || 'Invalid date format');
+                    }
                   }
                   break;
                 
