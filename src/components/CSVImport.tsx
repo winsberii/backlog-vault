@@ -10,11 +10,24 @@ import { Upload, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import * as Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ImportResult {
   success: number;
   failed: number;
+  updated: number;
+  skipped: number;
   errors: string[];
+}
+
+interface DuplicateGame {
+  rowIndex: number;
+  csvData: any;
+  existingGame: any;
+  title: string;
+  action: 'skip' | 'update' | 'import';
 }
 
 interface CSVImportProps {
@@ -31,6 +44,9 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [duplicates, setDuplicates] = useState<DuplicateGame[]>([]);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [isProcessingDuplicates, setIsProcessingDuplicates] = useState(false);
 
   const gameFields = [
     { key: "title", label: "Title", required: true },
@@ -130,58 +146,101 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
     }));
   };
 
-  const validateAndImport = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication Error",
-        description: "You must be logged in to import data. Please refresh the page and try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log("Starting import with user:", user?.id);
-
-    // Check if required fields are mapped
-    const requiredFields = ['title', 'platform_name', 'playthrough_platform_name'];
-    const missingFields = requiredFields.filter(field => 
-      !Object.values(fieldMapping).includes(field)
-    );
-    
-    if (missingFields.length > 0) {
-      toast({
-        title: "Missing Required Fields",
-        description: `Please map these required fields: ${missingFields.join(', ')}`,
-        variant: "destructive",
-      });
-      return;
-    }
+  const checkForDuplicates = async () => {
+    if (!user) return;
 
     setIsUploading(true);
     setUploadProgress(0);
-    setImportResult(null);
 
     try {
-      console.log("Fetching platforms...");
-      // Fetch platforms for name-to-ID mapping
-      const { data: platformsData, error: platformsError } = await supabase
+      const { data: platformsData } = await supabase
         .from('platforms')
         .select('id, name');
-      
-      if (platformsError) {
-        console.error("Platform fetch error:", platformsError);
-        throw new Error(`Failed to fetch platforms: ${platformsError.message}`);
-      }
-      
-      console.log("Platforms fetched:", platformsData?.length || 0);
 
-      const errors: string[] = [];
-      let successCount = 0;
-      let failedCount = 0;
+      const { data: existingGames } = await supabase
+        .from('games')
+        .select('*')
+        .eq('user_id', user.id);
+
+      const foundDuplicates: DuplicateGame[] = [];
 
       for (let i = 0; i < csvData.length; i++) {
         const row = csvData[i];
         
+        // Get title from mapped field
+        const titleHeader = Object.entries(fieldMapping).find(([_, field]) => field === 'title')?.[0];
+        const title = titleHeader ? row[titleHeader] : null;
+
+        if (!title?.trim()) continue;
+
+        // Check for existing game with same title
+        const existingGame = existingGames?.find(g => 
+          g.title.toLowerCase().trim() === title.toLowerCase().trim()
+        );
+
+        if (existingGame) {
+          foundDuplicates.push({
+            rowIndex: i,
+            csvData: row,
+            existingGame,
+            title: title.trim(),
+            action: 'skip'
+          });
+        }
+
+        setUploadProgress(((i + 1) / csvData.length) * 50);
+      }
+
+      if (foundDuplicates.length > 0) {
+        setDuplicates(foundDuplicates);
+        setShowDuplicateDialog(true);
+        setIsUploading(false);
+      } else {
+        // No duplicates, proceed with import
+        await performImport();
+      }
+    } catch (error: any) {
+      console.error("Duplicate check failed:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsUploading(false);
+    }
+  };
+
+  const performImport = async () => {
+    if (!user) return;
+
+    setIsProcessingDuplicates(true);
+    setShowDuplicateDialog(false);
+    setUploadProgress(50);
+    setImportResult(null);
+
+    try {
+      const { data: platformsData } = await supabase
+        .from('platforms')
+        .select('id, name');
+
+      const errors: string[] = [];
+      let successCount = 0;
+      let failedCount = 0;
+      let updatedCount = 0;
+      let skippedCount = 0;
+
+      for (let i = 0; i < csvData.length; i++) {
+        const row = csvData[i];
+        
+        // Check if this row has a duplicate action
+        const duplicate = duplicates.find(d => d.rowIndex === i);
+        
+        if (duplicate?.action === 'skip') {
+          skippedCount++;
+          setUploadProgress(50 + ((i + 1) / csvData.length) * 50);
+          continue;
+        }
+
         try {
           const gameData: any = {
             user_id: user.id,
@@ -248,46 +307,59 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
             continue;
           }
 
-          console.log(`Inserting row ${i + 1}:`, gameData);
-          
-          const { error } = await supabase
-            .from('games')
-            .insert([gameData]);
+          if (duplicate?.action === 'update') {
+            // Update existing game
+            const { error } = await supabase
+              .from('games')
+              .update(gameData)
+              .eq('id', duplicate.existingGame.id);
 
-          if (error) {
-            console.error(`Row ${i + 1} insert error:`, error);
-            errors.push(`Row ${i + 1}: ${error.message}`);
-            failedCount++;
+            if (error) {
+              errors.push(`Row ${i + 1}: Update failed - ${error.message}`);
+              failedCount++;
+            } else {
+              updatedCount++;
+            }
           } else {
-            console.log(`Row ${i + 1} inserted successfully`);
-            successCount++;
+            // Insert new game
+            const { error } = await supabase
+              .from('games')
+              .insert([gameData]);
+
+            if (error) {
+              errors.push(`Row ${i + 1}: ${error.message}`);
+              failedCount++;
+            } else {
+              successCount++;
+            }
           }
         } catch (error: any) {
-          console.error(`Row ${i + 1} processing error:`, error);
           errors.push(`Row ${i + 1}: ${error.message}`);
           failedCount++;
         }
 
-        setUploadProgress(((i + 1) / csvData.length) * 100);
+        setUploadProgress(50 + ((i + 1) / csvData.length) * 50);
       }
 
       setImportResult({
         success: successCount,
         failed: failedCount,
-        errors: errors.slice(0, 10) // Limit to first 10 errors
+        updated: updatedCount,
+        skipped: skippedCount,
+        errors: errors.slice(0, 10)
       });
 
-      if (successCount > 0) {
+      const totalProcessed = successCount + updatedCount;
+      if (totalProcessed > 0) {
         toast({
           title: "Import Complete",
-          description: `Successfully imported ${successCount} games${failedCount > 0 ? `, ${failedCount} failed` : ''}.`,
+          description: `Imported: ${successCount}, Updated: ${updatedCount}, Skipped: ${skippedCount}${failedCount > 0 ? `, Failed: ${failedCount}` : ''}`,
         });
         onImportComplete?.();
       } else {
         toast({
-          title: "Import Failed",
-          description: "No games were imported successfully.",
-          variant: "destructive",
+          title: "Import Complete",
+          description: `Skipped: ${skippedCount}${failedCount > 0 ? `, Failed: ${failedCount}` : ''}`,
         });
       }
 
@@ -300,7 +372,18 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
       });
     } finally {
       setIsUploading(false);
+      setIsProcessingDuplicates(false);
     }
+  };
+
+  const handleDuplicateAction = (rowIndex: number, action: 'skip' | 'update' | 'import') => {
+    setDuplicates(prev => prev.map(d => 
+      d.rowIndex === rowIndex ? { ...d, action } : d
+    ));
+  };
+
+  const handleApplyActionToAll = (action: 'skip' | 'update' | 'import') => {
+    setDuplicates(prev => prev.map(d => ({ ...d, action })));
   };
 
   return (
@@ -366,12 +449,12 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
           )}
 
           <Button
-            onClick={validateAndImport}
-            disabled={isUploading || !['title', 'platform_name', 'playthrough_platform_name'].every(field => Object.values(fieldMapping).includes(field))}
+            onClick={checkForDuplicates}
+            disabled={isUploading || isProcessingDuplicates || !['title', 'platform_name', 'playthrough_platform_name'].every(field => Object.values(fieldMapping).includes(field))}
             className="w-full"
           >
             <Upload className="h-4 w-4 mr-2" />
-            {isUploading ? "Importing..." : `Import ${csvData.length} Games`}
+            {isUploading || isProcessingDuplicates ? "Processing..." : `Import ${csvData.length} Games`}
           </Button>
         </div>
       )}
@@ -380,13 +463,13 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {importResult.success > 0 && importResult.failed === 0 && (
+              {(importResult.success > 0 || importResult.updated > 0) && importResult.failed === 0 && (
                 <CheckCircle className="h-5 w-5 text-green-600" />
               )}
-              {importResult.failed > 0 && importResult.success === 0 && (
+              {importResult.failed > 0 && importResult.success === 0 && importResult.updated === 0 && (
                 <XCircle className="h-5 w-5 text-red-600" />
               )}
-              {importResult.success > 0 && importResult.failed > 0 && (
+              {(importResult.success > 0 || importResult.updated > 0) && importResult.failed > 0 && (
                 <AlertTriangle className="h-5 w-5 text-yellow-600" />
               )}
               Import Results
@@ -395,7 +478,13 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
           <CardContent className="space-y-2">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="text-green-600 dark:text-green-400">
-                ✓ Successful: {importResult.success}
+                ✓ Imported: {importResult.success}
+              </div>
+              <div className="text-blue-600 dark:text-blue-400">
+                ↻ Updated: {importResult.updated}
+              </div>
+              <div className="text-gray-600 dark:text-gray-400">
+                ⊘ Skipped: {importResult.skipped}
               </div>
               <div className="text-red-600 dark:text-red-400">
                 ✗ Failed: {importResult.failed}
@@ -417,6 +506,83 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Duplicate Games Found</DialogTitle>
+            <DialogDescription>
+              {duplicates.length} game{duplicates.length !== 1 ? 's' : ''} already exist in your library. Choose what to do with each one.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex gap-2 pb-2 border-b">
+              <Button size="sm" variant="outline" onClick={() => handleApplyActionToAll('skip')}>
+                Skip All
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleApplyActionToAll('update')}>
+                Update All
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleApplyActionToAll('import')}>
+                Import All as New
+              </Button>
+            </div>
+
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="space-y-4">
+                {duplicates.map((duplicate) => (
+                  <Card key={duplicate.rowIndex}>
+                    <CardContent className="pt-4">
+                      <div className="space-y-3">
+                        <div>
+                          <h4 className="font-medium text-sm mb-1">{duplicate.title}</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Existing game found in your library
+                          </p>
+                        </div>
+
+                        <RadioGroup
+                          value={duplicate.action}
+                          onValueChange={(value) => handleDuplicateAction(duplicate.rowIndex, value as 'skip' | 'update' | 'import')}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="skip" id={`skip-${duplicate.rowIndex}`} />
+                            <Label htmlFor={`skip-${duplicate.rowIndex}`} className="text-sm font-normal cursor-pointer">
+                              Skip - Don't import this game
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="update" id={`update-${duplicate.rowIndex}`} />
+                            <Label htmlFor={`update-${duplicate.rowIndex}`} className="text-sm font-normal cursor-pointer">
+                              Update - Replace existing game data with CSV data
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="import" id={`import-${duplicate.rowIndex}`} />
+                            <Label htmlFor={`import-${duplicate.rowIndex}`} className="text-sm font-normal cursor-pointer">
+                              Import as New - Create a duplicate entry
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+
+            <div className="flex gap-2 pt-2 border-t">
+              <Button variant="outline" onClick={() => setShowDuplicateDialog(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button onClick={performImport} className="flex-1">
+                Continue Import
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
