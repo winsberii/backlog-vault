@@ -97,7 +97,7 @@ export const ImportExport = ({ isOpen, onClose, onImportComplete }: ImportExport
                       <ul className="list-disc list-inside space-y-1 ml-2">
                         <li>Download the template to see the correct format</li>
                         <li>Platform names must match existing platforms in your library</li>
-                        <li>Dates should be in YYYY-MM-DD format (e.g., 2024-01-15) - other formats like MM/DD/YYYY are also supported</li>
+                        <li>Dates can be in YYYY-MM-DD, DD.MM.YYYY, MM/DD/YYYY, or DD/MM/YYYY format</li>
                         <li>Boolean fields should be "true" or "false"</li>
                       </ul>
                     </div>

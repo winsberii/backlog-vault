@@ -80,6 +80,12 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
       return { valid: true, date: format(parsedDate, 'yyyy-MM-dd') };
     }
 
+    // Try parsing as DD.MM.YYYY
+    parsedDate = parse(dateStr, 'dd.MM.yyyy', new Date());
+    if (isValid(parsedDate)) {
+      return { valid: true, date: format(parsedDate, 'yyyy-MM-dd') };
+    }
+
     // Try parsing as MM/DD/YYYY
     parsedDate = parse(dateStr, 'MM/dd/yyyy', new Date());
     if (isValid(parsedDate)) {
@@ -100,7 +106,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
 
     return { 
       valid: false, 
-      error: `Invalid date format: "${dateStr}". Expected YYYY-MM-DD (e.g., 2024-01-15) or MM/DD/YYYY or DD/MM/YYYY` 
+      error: `Invalid date format: "${dateStr}". Expected YYYY-MM-DD, DD.MM.YYYY, MM/DD/YYYY, or DD/MM/YYYY` 
     };
   };
 
