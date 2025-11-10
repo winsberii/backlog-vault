@@ -28,6 +28,7 @@ export type Database = {
           is_completed: boolean | null
           is_currently_playing: boolean | null
           needs_purchase: boolean | null
+          number_of_players: string | null
           platform: string | null
           playthrough_platform: string | null
           price: number | null
@@ -51,6 +52,7 @@ export type Database = {
           is_completed?: boolean | null
           is_currently_playing?: boolean | null
           needs_purchase?: boolean | null
+          number_of_players?: string | null
           platform?: string | null
           playthrough_platform?: string | null
           price?: number | null
@@ -74,6 +76,7 @@ export type Database = {
           is_completed?: boolean | null
           is_currently_playing?: boolean | null
           needs_purchase?: boolean | null
+          number_of_players?: string | null
           platform?: string | null
           playthrough_platform?: string | null
           price?: number | null

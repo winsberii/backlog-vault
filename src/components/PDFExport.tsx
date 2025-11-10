@@ -80,13 +80,14 @@ export const PDFExport = () => {
         game.is_currently_playing ? 'Yes' : 'No',
         game.actual_playtime ? `${game.actual_playtime}h` : '',
         game.achievements || '0',
+        game.number_of_players || '',
         game.completion_date || '',
         game.price ? `$${game.price}` : ''
       ]);
 
       // Add table
       autoTable(pdf, {
-        head: [['Title', 'Platform', 'Playthrough', 'Completed', 'Playing', 'Playtime', 'Achievements', 'Completed Date', 'Price']],
+        head: [['Title', 'Platform', 'Playthrough', 'Completed', 'Playing', 'Playtime', 'Achievements', 'Players', 'Completed Date', 'Price']],
         body: tableData,
         startY: 65,
         styles: {
@@ -98,15 +99,16 @@ export const PDFExport = () => {
           textColor: 255,
         },
         columnStyles: {
-          0: { cellWidth: 35 }, // Title
-          1: { cellWidth: 20 }, // Platform
-          2: { cellWidth: 20 }, // Playthrough
+          0: { cellWidth: 30 }, // Title
+          1: { cellWidth: 18 }, // Platform
+          2: { cellWidth: 18 }, // Playthrough
           3: { cellWidth: 15 }, // Completed
           4: { cellWidth: 15 }, // Playing
           5: { cellWidth: 15 }, // Playtime
-          6: { cellWidth: 15 }, // Achievements
-          7: { cellWidth: 20 }, // Date
-          8: { cellWidth: 15 }, // Price
+          6: { cellWidth: 12 }, // Achievements
+          7: { cellWidth: 15 }, // Players
+          8: { cellWidth: 20 }, // Date
+          9: { cellWidth: 12 }, // Price
         },
         margin: { left: 10, right: 10 },
       });

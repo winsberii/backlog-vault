@@ -62,6 +62,7 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
     { key: "completion_date", label: "Completion Date (YYYY-MM-DD)", required: false },
     { key: "price", label: "Price", required: false },
     { key: "achievements", label: "Achievements", required: false },
+    { key: "number_of_players", label: "Number of Players", required: false },
     { key: "comment", label: "Comment", required: false },
     { key: "retro_achievement_url", label: "RetroAchievements URL", required: false },
     { key: "how_long_to_beat_url", label: "HowLongToBeat URL", required: false },
@@ -342,6 +343,10 @@ export const CSVImport = ({ onImportComplete }: CSVImportProps) => {
                       throw new Error(dateValidation.error || 'Invalid date format');
                     }
                   }
+                  break;
+                
+                case 'number_of_players':
+                  gameData[gameField] = String(value);
                   break;
                 
                 default:

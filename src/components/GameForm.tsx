@@ -87,6 +87,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     price: game?.price || "",
     comment: game?.comment || "",
     achievements: game?.achievements || "",
+    numberOfPlayers: game?.number_of_players || "",
     retroAchievementUrl: game?.retro_achievement_url || "",
     howLongToBeatUrl: game?.how_long_to_beat_url || "",
     tosort: game?.tosort || false,
@@ -250,6 +251,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
         price: formData.price ? parseFloat(formData.price) : null,
         comment: formData.comment || null,
         achievements: formData.achievements ? parseInt(formData.achievements) : null,
+        number_of_players: formData.numberOfPlayers || null,
         retro_achievement_url: formData.retroAchievementUrl || null,
         how_long_to_beat_url: formData.howLongToBeatUrl || null,
         tosort: formData.tosort,
@@ -942,16 +944,30 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="achievements">Number of Achievements</Label>
-                    <Input
-                      id="achievements"
-                      type="number"
-                      value={formData.achievements}
-                      onChange={(e) => handleInputChange("achievements", e.target.value)}
-                      placeholder="0"
-                      className="bg-background border-border"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="achievements">Number of Achievements</Label>
+                      <Input
+                        id="achievements"
+                        type="number"
+                        value={formData.achievements}
+                        onChange={(e) => handleInputChange("achievements", e.target.value)}
+                        placeholder="0"
+                        className="bg-background border-border"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="numberOfPlayers">Number of Players</Label>
+                      <Input
+                        id="numberOfPlayers"
+                        type="text"
+                        value={formData.numberOfPlayers}
+                        onChange={(e) => handleInputChange("numberOfPlayers", e.target.value)}
+                        placeholder="e.g., 1, 1-4, 2-8"
+                        className="bg-background border-border"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
