@@ -14,6 +14,7 @@ import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { isValid, parse, format } from "date-fns";
 
 interface GameFormProps {
   game?: any;
@@ -43,6 +44,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [activePlatforms, setActivePlatforms] = useState<any[]>([]);
   const [duplicateGames, setDuplicateGames] = useState<any[]>([]);
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [dateError, setDateError] = useState<string>("");
   
   // Platforms available in libretro-thumbnails
   const libretroAvailablePlatforms = [
@@ -117,8 +119,72 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     fetchPlatforms();
   }, []);
 
+  const validateDate = (dateString: string): { valid: boolean; date?: string; error?: string } => {
+    if (!dateString || String(dateString).trim() === '') {
+      return { valid: true }; // Empty dates are allowed
+    }
+
+    const dateStr = String(dateString).trim();
+    
+    // Try parsing as YYYY-MM-DD (ISO format - preferred)
+    let parsedDate = parse(dateStr, 'yyyy-MM-dd', new Date());
+    if (isValid(parsedDate)) {
+      return { valid: true, date: format(parsedDate, 'yyyy-MM-dd') };
+    }
+
+    // Try parsing as DD.MM.YYYY
+    parsedDate = parse(dateStr, 'dd.MM.yyyy', new Date());
+    if (isValid(parsedDate)) {
+      return { valid: true, date: format(parsedDate, 'yyyy-MM-dd') };
+    }
+
+    // Try parsing as MM/DD/YYYY
+    parsedDate = parse(dateStr, 'MM/dd/yyyy', new Date());
+    if (isValid(parsedDate)) {
+      return { valid: true, date: format(parsedDate, 'yyyy-MM-dd') };
+    }
+
+    // Try parsing as DD/MM/YYYY
+    parsedDate = parse(dateStr, 'dd/MM/yyyy', new Date());
+    if (isValid(parsedDate)) {
+      return { valid: true, date: format(parsedDate, 'yyyy-MM-dd') };
+    }
+
+    // Try parsing as M/D/YYYY (single digit month/day)
+    parsedDate = parse(dateStr, 'M/d/yyyy', new Date());
+    if (isValid(parsedDate)) {
+      return { valid: true, date: format(parsedDate, 'yyyy-MM-dd') };
+    }
+
+    return { 
+      valid: false, 
+      error: `Invalid date format. Use YYYY-MM-DD, DD.MM.YYYY, MM/DD/YYYY, or DD/MM/YYYY` 
+    };
+  };
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear date error when user types in completion date
+    if (field === 'completionDate') {
+      setDateError("");
+    }
+  };
+
+  const handleDateBlur = (field: string, value: string) => {
+    if (!value.trim()) {
+      setDateError("");
+      return;
+    }
+
+    const validation = validateDate(value);
+    if (validation.valid && validation.date) {
+      // Update to normalized format
+      setFormData(prev => ({ ...prev, [field]: validation.date }));
+      setDateError("");
+    } else if (!validation.valid) {
+      setDateError(validation.error || "Invalid date format");
+    }
   };
 
   const checkForDuplicates = async (title: string) => {
@@ -797,11 +863,19 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                       <Label htmlFor="completionDate">Completion Date</Label>
                       <Input
                         id="completionDate"
-                        type="date"
+                        type="text"
+                        placeholder="YYYY-MM-DD or DD.MM.YYYY or MM/DD/YYYY"
                         value={formData.completionDate}
                         onChange={(e) => handleInputChange("completionDate", e.target.value)}
-                        className="bg-background border-border"
+                        onBlur={(e) => handleDateBlur("completionDate", e.target.value)}
+                        className={`bg-background border-border ${dateError ? 'border-destructive' : ''}`}
                       />
+                      {dateError && (
+                        <p className="text-sm text-destructive">{dateError}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        You can type or paste a date in various formats
+                      </p>
                     </div>
                   )}
 
