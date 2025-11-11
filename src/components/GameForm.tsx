@@ -45,6 +45,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [duplicateGames, setDuplicateGames] = useState<any[]>([]);
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [dateError, setDateError] = useState<string>("");
+  const [playerTemplates, setPlayerTemplates] = useState<any[]>([]);
   
   // Platforms available in libretro-thumbnails
   const libretroAvailablePlatforms = [
@@ -93,9 +94,9 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     tosort: game?.tosort || false,
   });
 
-  // Fetch platforms on component mount
+  // Fetch platforms and player templates on component mount
   useEffect(() => {
-    const fetchPlatforms = async () => {
+    const fetchData = async () => {
       try {
         // Fetch all platforms for main platform selection
         const { data: allPlatforms } = await supabase
@@ -110,14 +111,21 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
           .eq('active', true)
           .order('name');
 
+        // Fetch player templates
+        const { data: templatesData } = await supabase
+          .from('number_of_players_templates')
+          .select('*')
+          .order('display_order');
+
         setPlatforms(allPlatforms || []);
         setActivePlatforms(activePlatformsData || []);
+        setPlayerTemplates(templatesData || []);
       } catch (error) {
-        console.error('Error fetching platforms:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
-    fetchPlatforms();
+    fetchData();
   }, []);
 
   const validateDate = (dateString: string): { valid: boolean; date?: string; error?: string } => {
@@ -959,14 +967,21 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
                     <div className="space-y-2">
                       <Label htmlFor="numberOfPlayers">Number of Players</Label>
-                      <Input
-                        id="numberOfPlayers"
-                        type="text"
+                      <Select
                         value={formData.numberOfPlayers}
-                        onChange={(e) => handleInputChange("numberOfPlayers", e.target.value)}
-                        placeholder="e.g., 1, 1-4, 2-8"
-                        className="bg-background border-border"
-                      />
+                        onValueChange={(value) => handleInputChange("numberOfPlayers", value)}
+                      >
+                        <SelectTrigger className="bg-background border-border">
+                          <SelectValue placeholder="Select number of players" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border-border z-50">
+                          {playerTemplates.map((template) => (
+                            <SelectItem key={template.id} value={template.value}>
+                              {template.value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 

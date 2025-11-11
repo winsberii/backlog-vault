@@ -104,6 +104,27 @@ export type Database = {
           },
         ]
       }
+      number_of_players_templates: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          display_order: number
+          id?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          value?: string
+        }
+        Relationships: []
+      }
       platforms: {
         Row: {
           active: boolean
