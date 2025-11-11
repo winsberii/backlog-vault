@@ -38,7 +38,8 @@ import {
   Trophy,
   X,
   SkipForward,
-  MoreVertical
+  MoreVertical,
+  Users
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -591,6 +592,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
                     {game.achievements}
                   </span>
                 )}
+                {game.number_of_players && (
+                  <span className="flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    {game.number_of_players}
+                  </span>
+                )}
               </>
             )}
             
@@ -803,6 +810,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
                     <span className="flex items-center gap-1">
                       <Trophy className="h-2.5 w-2.5" />
                       {game.achievements}
+                    </span>
+                  )}
+                  {game.number_of_players && (
+                    <span className="flex items-center gap-1">
+                      <Users className="h-2.5 w-2.5" />
+                      {game.number_of_players}
                     </span>
                   )}
                 </>
