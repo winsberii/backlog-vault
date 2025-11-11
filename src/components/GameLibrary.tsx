@@ -63,6 +63,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   const [showFilters, setShowFilters] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedPlaythroughPlatforms, setSelectedPlaythroughPlatforms] = useState<string[]>([]);
+  const [selectedNumberOfPlayers, setSelectedNumberOfPlayers] = useState<string[]>([]);
 
   const fetchGames = async () => {
     if (!user) {
@@ -102,6 +103,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   // Get unique platforms for filter
   const uniquePlatforms = Array.from(new Set(games.map(game => game.platform_info?.name).filter(Boolean)));
   const uniquePlaythroughPlatforms = Array.from(new Set(games.map(game => game.playthrough_platform_info?.name).filter(Boolean)));
+  const uniqueNumberOfPlayers = Array.from(new Set(games.map(game => game.number_of_players).filter(Boolean)));
 
   // Filter games based on view mode and filters
   const filteredGames = useMemo(() => {
@@ -139,7 +141,11 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       const passesPlaythroughPlatform = selectedPlaythroughPlatforms.length === 0 || 
         selectedPlaythroughPlatforms.includes(game.playthrough_platform_info?.name);
 
-      return passesViewMode && passesSearch && passesPlatform && passesPlaythroughPlatform;
+      // Number of Players filter
+      const passesNumberOfPlayers = selectedNumberOfPlayers.length === 0 || 
+        selectedNumberOfPlayers.includes(game.number_of_players);
+
+      return passesViewMode && passesSearch && passesPlatform && passesPlaythroughPlatform && passesNumberOfPlayers;
     }).sort((a, b) => {
       // View-specific sorting takes precedence over manual filter sorting
       if (viewMode === 'backlog') {
@@ -193,7 +199,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       // Default fallback sorting (by creation date)
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [games, viewMode, searchTerm, selectedPlatforms, selectedPlaythroughPlatforms]);
+  }, [games, viewMode, searchTerm, selectedPlatforms, selectedPlaythroughPlatforms, selectedNumberOfPlayers]);
 
   // Calculate statistics and notify parent
   useEffect(() => {
@@ -303,6 +309,31 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
             </div>
           )}
 
+          {/* Number of Players Filter */}
+          {uniqueNumberOfPlayers.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Number of Players</label>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {uniqueNumberOfPlayers.map((players) => (
+                  <div key={players} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`players-${players}`}
+                      checked={selectedNumberOfPlayers.includes(players)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedNumberOfPlayers([...selectedNumberOfPlayers, players]);
+                        } else {
+                          setSelectedNumberOfPlayers(selectedNumberOfPlayers.filter(p => p !== players));
+                        }
+                      }}
+                    />
+                    <label htmlFor={`players-${players}`} className="text-xs">{players}</label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Clear Filters */}
           <Button 
             variant="outline" 
@@ -310,6 +341,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
             onClick={() => {
               setSelectedPlatforms([]);
               setSelectedPlaythroughPlatforms([]);
+              setSelectedNumberOfPlayers([]);
             }}
             className="w-full"
           >
