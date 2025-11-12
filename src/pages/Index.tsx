@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { GameLibrary } from "@/components/GameLibrary";
 import { GameForm } from "@/components/GameForm";
 import { ImportExport } from "@/components/ImportExport";
+import { ApiKeyManager } from "@/components/ApiKeyManager";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Plus, FileSpreadsheet, Gamepad, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort' | 'skipped';
+export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort' | 'skipped' | 'api-keys';
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('backlog');
   const [showGameForm, setShowGameForm] = useState(false);
@@ -78,22 +79,30 @@ const Index = () => {
         <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-center'} mb-6`}>
           <div>
             <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold capitalize`}>
-              {currentView === 'backlog' ? 'My Backlog' : currentView === 'wishlist' ? 'Wishlist' : currentView === 'tosort' ? 'To Sort' : currentView === 'skipped' ? 'Skipped Games' : 'Completed Games'}
+              {currentView === 'backlog' ? 'My Backlog' : 
+               currentView === 'wishlist' ? 'Wishlist' : 
+               currentView === 'tosort' ? 'To Sort' : 
+               currentView === 'skipped' ? 'Skipped Games' : 
+               currentView === 'api-keys' ? 'API Keys' :
+               'Completed Games'}
             </h2>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-              <span className="flex items-center gap-1">
-                <Gamepad className="h-4 w-4" />
-                {listStats.count}
-              </span>
-              {listStats.totalDuration > 0 && (
+            {currentView !== 'api-keys' && (
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                 <span className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  {listStats.totalDuration}h
+                  <Gamepad className="h-4 w-4" />
+                  {listStats.count}
                 </span>
-              )}
-            </div>
+                {listStats.totalDuration > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {listStats.totalDuration}h
+                  </span>
+                )}
+              </div>
+            )}
           </div>
-          <div className={`flex ${isMobile ? 'flex-col gap-3' : 'gap-2'}`}>
+          {currentView !== 'api-keys' && (
+            <div className={`flex ${isMobile ? 'flex-col gap-3' : 'gap-2'}`}>
             <Button
               onClick={() => setShowImportExport(true)}
               variant="outline"
@@ -112,15 +121,20 @@ const Index = () => {
               Add Game
             </Button>
           </div>
+          )}
         </div>
 
-        {/* Game Library */}
-        <GameLibrary 
-          viewMode={currentView} 
-          onEditGame={handleEditGame} 
-          refreshTrigger={refreshTrigger}
-          onStatsChange={setListStats}
-        />
+        {/* Game Library or API Key Manager */}
+        {currentView === 'api-keys' ? (
+          <ApiKeyManager />
+        ) : (
+          <GameLibrary 
+            viewMode={currentView} 
+            onEditGame={handleEditGame} 
+            refreshTrigger={refreshTrigger}
+            onStatsChange={setListStats}
+          />
+        )}
 
         {/* Game Form Modal */}
         {showGameForm && <GameForm game={editingGame} onClose={handleCloseForm} onSave={handleGameSaved} />}
