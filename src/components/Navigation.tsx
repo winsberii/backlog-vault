@@ -42,11 +42,6 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
       label: 'To Sort',
       icon: Filter,
     },
-    {
-      key: 'api-keys' as ViewMode,
-      label: 'API Keys',
-      icon: Key,
-    },
   ];
 
   const handleNavItemClick = (item: ViewMode) => {
@@ -64,10 +59,18 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
             <DrawerTrigger asChild>
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <Menu className="h-4 w-4" />
-                {navItems.find(item => item.key === currentView)?.label || 'Menu'}
+                {navItems.find(item => item.key === currentView)?.label || (currentView === 'api-keys' ? 'API Keys' : 'Menu')}
               </Button>
             </DrawerTrigger>
             <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => onViewChange('api-keys')}
+                title="API Keys"
+              >
+                <Key className="h-4 w-4" />
+              </Button>
               <CurrencySelector />
               <ThemeToggle />
             </div>
@@ -130,6 +133,14 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
       })}
       </div>
       <div className="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => onViewChange('api-keys')}
+          title="API Keys"
+        >
+          <Key className="h-4 w-4" />
+        </Button>
         <CurrencySelector />
         <ThemeToggle />
       </div>
