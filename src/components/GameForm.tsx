@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, Calendar, Loader2, Download } from "lucide-react";
+import { X, Upload, Calendar, Loader2, Download, Search } from "lucide-react";
 import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,6 +30,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isFetchingHLTB, setIsFetchingHLTB] = useState(false);
   const [isSearchingHLTB, setIsSearchingHLTB] = useState(false);
+  const [isSearchingHLTBUrl, setIsSearchingHLTBUrl] = useState(false);
   const [isFetchingRA, setIsFetchingRA] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
@@ -447,6 +448,72 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
       title: "URL Selected",
       description: `HowLongToBeat URL set for "${selectedGame.title}"`,
     });
+  };
+
+  const handleSearchHLTBUrl = async () => {
+    if (!formData.title) {
+      toast({
+        title: "Error",
+        description: "Please enter a game title first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.platform) {
+      toast({
+        title: "Error",
+        description: "Please select a platform first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSearchingHLTBUrl(true);
+
+    try {
+      const platformName = platforms.find(p => p.id === formData.platform)?.name || formData.platform;
+      
+      const response = await fetch("https://workflow.dotsaft.ru/webhook/646bba9a-6d61-44a9-a1de-b8f2eb80c811", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          platform: platformName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch HLTB URL");
+      }
+
+      const data = await response.json();
+
+      if (data.hltb_url && data.hltb_url.trim() !== "") {
+        handleInputChange("howLongToBeatUrl", data.hltb_url);
+        toast({
+          title: "Success",
+          description: "HowLongToBeat URL found and filled in.",
+        });
+      } else {
+        toast({
+          title: "No URL Found",
+          description: "No HowLongToBeat URL was found for this game.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error searching HLTB URL:", error);
+      toast({
+        title: "Error",
+        description: "Failed to search for HowLongToBeat URL. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearchingHLTBUrl(false);
+    }
   };
 
   const handleFetchRAData = async () => {
@@ -897,6 +964,20 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                          type="button"
                          variant="outline"
                          size="icon"
+                         onClick={handleSearchHLTBUrl}
+                         disabled={isSearchingHLTBUrl || !formData.title || !formData.platform}
+                         title="Search for HowLongToBeat URL"
+                       >
+                         {isSearchingHLTBUrl ? (
+                           <Loader2 className="h-4 w-4 animate-spin" />
+                         ) : (
+                           <Search className="h-4 w-4" />
+                         )}
+                       </Button>
+                       <Button
+                         type="button"
+                         variant="outline"
+                         size="icon"
                          onClick={handleFetchHLTBData}
                          disabled={isFetchingHLTB || !formData.howLongToBeatUrl}
                          title="Fetch cover art and duration from HowLongToBeat"
@@ -908,6 +989,9 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                          )}
                        </Button>
                      </div>
+                     {isSearchingHLTBUrl && (
+                       <p className="text-sm text-muted-foreground">Searching for HowLongToBeat URL...</p>
+                     )}
                      {isFetchingHLTB && (
                        <p className="text-sm text-muted-foreground">Fetching data from HowLongToBeat...</p>
                      )}
