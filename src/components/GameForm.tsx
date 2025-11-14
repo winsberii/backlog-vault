@@ -474,22 +474,14 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     try {
       const platformName = platforms.find(p => p.id === formData.platform)?.name || formData.platform;
       
-      const response = await fetch("https://workflow.dotsaft.ru/webhook/646bba9a-6d61-44a9-a1de-b8f2eb80c811", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('search-hltb-url', {
+        body: {
           title: formData.title,
           platform: platformName,
-        }),
+        }
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch HLTB URL");
-      }
-
-      const data = await response.json();
+      if (error) throw error;
 
       if (Array.isArray(data) && data.length > 0 && data[0].hltb_url && data[0].hltb_url.trim() !== "") {
         handleInputChange("howLongToBeatUrl", data[0].hltb_url);
