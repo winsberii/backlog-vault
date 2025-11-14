@@ -491,8 +491,8 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
       const data = await response.json();
 
-      if (data.hltb_url && data.hltb_url.trim() !== "") {
-        handleInputChange("howLongToBeatUrl", data.hltb_url);
+      if (Array.isArray(data) && data.length > 0 && data[0].hltb_url && data[0].hltb_url.trim() !== "") {
+        handleInputChange("howLongToBeatUrl", data[0].hltb_url);
         toast({
           title: "Success",
           description: "HowLongToBeat URL found and filled in.",
