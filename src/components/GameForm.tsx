@@ -470,9 +470,14 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     }
 
     setIsSearchingHLTBUrl(true);
+    console.log('[HLTB URL Search] Starting search for:', { 
+      title: formData.title, 
+      platform: formData.platform 
+    });
 
     try {
       const platformName = platforms.find(p => p.id === formData.platform)?.name || formData.platform;
+      console.log('[HLTB URL Search] Resolved platform name:', platformName);
       
       const { data, error } = await supabase.functions.invoke('search-hltb-url', {
         body: {
@@ -481,15 +486,26 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
         }
       });
 
-      if (error) throw error;
+      console.log('[HLTB URL Search] Raw response:', { data, error });
+
+      if (error) {
+        console.error('[HLTB URL Search] Edge function error:', error);
+        throw new Error(`Edge function error: ${error.message || JSON.stringify(error)}`);
+      }
+
+      console.log('[HLTB URL Search] Data type:', Array.isArray(data) ? 'array' : typeof data);
+      console.log('[HLTB URL Search] Data length:', Array.isArray(data) ? data.length : 'N/A');
+      console.log('[HLTB URL Search] Data content:', JSON.stringify(data, null, 2));
 
       if (Array.isArray(data) && data.length > 0 && data[0].hltb_url && data[0].hltb_url.trim() !== "") {
+        console.log('[HLTB URL Search] ✓ URL found:', data[0].hltb_url);
         handleInputChange("howLongToBeatUrl", data[0].hltb_url);
         toast({
           title: "Success",
-          description: "HowLongToBeat URL found and filled in.",
+          description: `Found URL for "${data[0].title || formData.title}"`,
         });
       } else {
+        console.log('[HLTB URL Search] ✗ No valid URL in response');
         toast({
           title: "No URL Found",
           description: "No HowLongToBeat URL was found for this game.",
@@ -497,14 +513,20 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
         });
       }
     } catch (error: any) {
-      console.error("Error searching HLTB URL:", error);
+      console.error("[HLTB URL Search] ✗ Error details:", {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        full: error
+      });
       toast({
-        title: "Error",
-        description: "Failed to search for HowLongToBeat URL. Please try again.",
+        title: "Search Failed",
+        description: `Error: ${error.message || 'Unknown error occurred'}`,
         variant: "destructive",
       });
     } finally {
       setIsSearchingHLTBUrl(false);
+      console.log('[HLTB URL Search] Search completed');
     }
   };
 
