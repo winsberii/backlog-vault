@@ -738,6 +738,13 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                           src={formData.coverImage} 
                           alt="Cover preview" 
                           className="w-32 h-48 object-contain rounded border bg-muted transition-transform duration-300 hover:scale-[2] hover:z-50 cursor-pointer"
+                          onDoubleClick={() => {
+                            window.open(
+                              formData.coverImage,
+                              'Cover Image',
+                              'width=512,height=512,resizable=yes,scrollbars=yes'
+                            );
+                          }}
                         />
                         <Button
                           type="button"
