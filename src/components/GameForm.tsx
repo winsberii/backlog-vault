@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, Calendar, Loader2, Download, Search } from "lucide-react";
+import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink } from "lucide-react";
 import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -938,6 +938,17 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                          placeholder="https://retroachievements.org/game/..."
                          className="bg-background border-border"
                        />
+                       {formData.retroAchievementUrl && (
+                         <Button
+                           type="button"
+                           variant="outline"
+                           size="icon"
+                           onClick={() => window.open(formData.retroAchievementUrl, '_blank')}
+                           title="Open RetroAchievements page"
+                         >
+                           <ExternalLink className="h-4 w-4" />
+                         </Button>
+                       )}
                        <Button
                          type="button"
                          variant="outline"
@@ -974,6 +985,17 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                          placeholder="https://howlongtobeat.com/game/..."
                          className="bg-background border-border"
                        />
+                       {formData.howLongToBeatUrl && (
+                         <Button
+                           type="button"
+                           variant="outline"
+                           size="icon"
+                           onClick={() => window.open(formData.howLongToBeatUrl, '_blank')}
+                           title="Open HowLongToBeat page"
+                         >
+                           <ExternalLink className="h-4 w-4" />
+                         </Button>
+                       )}
                        <Button
                          type="button"
                          variant="outline"
@@ -996,11 +1018,11 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                          disabled={isFetchingHLTB || !formData.howLongToBeatUrl}
                          title="Fetch cover art and duration from HowLongToBeat"
                        >
-                         {isFetchingHLTB ? (
-                           <Loader2 className="h-4 w-4 animate-spin" />
-                         ) : (
-                           <Download className="h-4 w-4" />
-                         )}
+                          {isFetchingHLTB ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
                        </Button>
                      </div>
                      {isSearchingHLTBUrl && (
