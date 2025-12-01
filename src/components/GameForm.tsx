@@ -737,13 +737,13 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         <img 
                           src={formData.coverImage} 
                           alt="Cover preview" 
-                          className="w-32 h-48 object-contain rounded border bg-muted"
+                          className="w-32 h-48 object-contain rounded border bg-muted transition-transform duration-300 hover:scale-[2] hover:z-50 cursor-pointer"
                         />
                         <Button
                           type="button"
                           variant="destructive"
                           size="sm"
-                          className="absolute top-2 right-2"
+                          className="absolute top-2 right-2 z-10"
                           onClick={handleRemoveImage}
                         >
                           <X className="h-3 w-3" />
