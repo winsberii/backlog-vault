@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +40,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [dateError, setDateError] = useState<string>("");
   const [playerTemplates, setPlayerTemplates] = useState<any[]>([]);
+  const autoFetchTriggeredRef = useRef<string>("");
   
   const [formData, setFormData] = useState({
     title: game?.title || "",
@@ -96,6 +97,24 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
     fetchData();
   }, []);
+
+  // Auto-fetch boxart when HLTB URL is filled and cover is empty
+  useEffect(() => {
+    const hltbUrl = formData.howLongToBeatUrl?.trim();
+    const hasCover = formData.coverImage?.trim();
+    
+    // Only auto-fetch if:
+    // 1. HLTB URL exists
+    // 2. No cover image exists
+    // 3. Not currently fetching
+    // 4. Haven't already auto-fetched for this URL
+    // 5. User is logged in
+    if (hltbUrl && !hasCover && !isFetchingHLTB && autoFetchTriggeredRef.current !== hltbUrl && user?.id) {
+      console.log('[Auto-fetch] Triggering background fetch for boxart from HLTB URL');
+      autoFetchTriggeredRef.current = hltbUrl;
+      handleFetchHLTBData();
+    }
+  }, [formData.howLongToBeatUrl, formData.coverImage, isFetchingHLTB, user?.id]);
 
   const validateDate = (dateString: string): { valid: boolean; date?: string; error?: string } => {
     if (!dateString || String(dateString).trim() === '') {
