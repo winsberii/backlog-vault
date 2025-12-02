@@ -578,7 +578,16 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             <img 
               src={game.cover_image || "/placeholder.svg"} 
               alt={game.title}
-              className="w-12 h-16 object-contain bg-muted rounded"
+              className="w-12 h-16 object-contain bg-muted rounded cursor-pointer"
+              onDoubleClick={() => {
+                if (game.cover_image) {
+                  window.open(
+                    game.cover_image,
+                    'Cover Image',
+                    'width=512,height=512,resizable=yes,scrollbars=yes'
+                  );
+                }
+              }}
             />
           </div>
           
@@ -806,7 +815,16 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         <img 
           src={game.cover_image || "/placeholder.svg"} 
           alt={game.title}
-          className="w-9 h-11 object-contain bg-muted rounded transition-transform duration-200 hover:scale-[4] hover:z-10 relative"
+          className="w-9 h-11 object-contain bg-muted rounded transition-transform duration-200 hover:scale-[4] hover:z-10 relative cursor-pointer"
+          onDoubleClick={() => {
+            if (game.cover_image) {
+              window.open(
+                game.cover_image,
+                'Cover Image',
+                'width=512,height=512,resizable=yes,scrollbars=yes'
+              );
+            }
+          }}
         />
       </div>
 
