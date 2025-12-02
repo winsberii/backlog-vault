@@ -76,7 +76,16 @@ export const GameCard = ({ game, viewMode, onEdit, onDelete }: GameCardProps) =>
         <img 
           src={game.coverImage} 
           alt={game.title}
-          className="w-full h-full object-contain bg-muted transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-full object-contain bg-muted transition-transform duration-300 group-hover:scale-105 cursor-pointer"
+          onDoubleClick={() => {
+            if (game.coverImage) {
+              window.open(
+                game.coverImage,
+                'Cover Image',
+                'width=512,height=512,resizable=yes,scrollbars=yes'
+              );
+            }
+          }}
         />
         {game.isCurrentlyPlaying && (
           <Badge className="absolute top-2 left-2 bg-accent text-accent-foreground">
