@@ -487,7 +487,10 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
       const { error } = await supabase
         .from('games')
         .update({ 
-          skipped: new Date().toISOString().split('T')[0] // Today's date
+          skipped: new Date().toISOString().split('T')[0], // Today's date
+          is_currently_playing: false,
+          needs_purchase: false,
+          tosort: false
         })
         .eq('id', game.id);
 
