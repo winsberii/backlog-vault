@@ -574,14 +574,14 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
 
   if (isMobile) {
     return (
-      <div className="bg-card border border-border rounded-lg p-4 hover:bg-secondary/20 transition-colors space-y-3">
-        {/* Header row with image and action button */}
-        <div className="flex items-start gap-3">
+      <div className="bg-card border border-border rounded-lg p-3 hover:bg-secondary/20 transition-colors">
+        <div className="flex items-center gap-3">
+          {/* Cover Image */}
           <div className="flex-shrink-0">
             <img 
               src={game.cover_image || "/placeholder.svg"} 
               alt={game.title}
-              className="w-12 h-16 object-contain bg-muted rounded cursor-pointer"
+              className="w-10 h-14 object-contain bg-muted rounded cursor-pointer"
               onDoubleClick={() => {
                 if (game.cover_image) {
                   window.open(
@@ -594,217 +594,110 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             />
           </div>
           
+          {/* Title and Time */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-base mb-1 truncate">{game.title}</h3>
-            <div className="text-sm text-muted-foreground">
-              {game.platform_info?.name}
-              {game.playthrough_platform_info?.name && game.playthrough_platform_info.name !== game.platform_info?.name && (
-                <> | {game.playthrough_platform_info.name}</>
+            <h3 className="font-medium text-sm truncate">{game.title}</h3>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {game.estimated_duration && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {game.estimated_duration}h
+                </span>
+              )}
+              {viewMode === 'completed' && game.completion_date && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {new Date(game.completion_date).toLocaleDateString()}
+                </span>
+              )}
+              {viewMode === 'wishlist' && game.price && (
+                <span className="flex items-center gap-1">
+                  <Wallet className="h-3 w-3" />
+                  {formatPrice(game.price)}
+                </span>
               )}
             </div>
           </div>
           
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onEdit}
-            className="flex-shrink-0"
-          >
-            <Edit className="h-4 w-4 mr-1" />
-            Edit
-          </Button>
-        </div>
-
-        {/* Game info and badges */}
-        <div className="space-y-2">
-          {/* Info line */}
-          <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-            {viewMode === 'backlog' && (
-              <>
-                {game.estimated_duration && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {game.estimated_duration}h
-                  </span>
-                )}
-                {game.actual_playtime > 0 && (
-                  <span>Played: {game.actual_playtime}h</span>
-                )}
-                {game.achievements > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Trophy className="h-3 w-3" />
-                    {game.achievements}
-                  </span>
-                )}
-                {game.number_of_players && (
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    {game.number_of_players}
-                  </span>
-                )}
-              </>
-            )}
-            
-            {viewMode === 'wishlist' && game.price && (
-              <span className="flex items-center gap-1">
-                <Wallet className="h-3 w-3" />
-                {formatPrice(game.price)}
-              </span>
-            )}
-            
-            {viewMode === 'completed' && (
-              <>
-                {game.completion_date && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(game.completion_date).toLocaleDateString()}
-                  </span>
-                )}
-                {game.estimated_duration && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {game.estimated_duration}h
-                  </span>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Status badges and comment */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex flex-wrap gap-1">
-              {game.is_currently_playing && (
-                <Badge variant="secondary" className="text-xs">
-                  <Play className="h-3 w-3 mr-1" />
-                  Playing
-                </Badge>
-              )}
-              {game.is_completed && (
-                <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Done
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {(viewMode !== 'backlog' && game.comment) && (
-            <div className="text-sm text-muted-foreground italic">
-              "{game.comment}"
-            </div>
-          )}
-        </div>
-
-        {/* Action buttons for mobile */}
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
-          {viewMode === 'backlog' && !game.is_currently_playing && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleToggleCurrentlyPlaying}
-              className="flex-1 min-w-[120px]"
-            >
-              <Play className="h-3 w-3 mr-1" />
-              Start Playing
-            </Button>
-          )}
-          
-          {viewMode === 'backlog' && game.is_currently_playing && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleToggleCurrentlyPlaying}
-              className="flex-1 min-w-[120px]"
-            >
-              <Square className="h-3 w-3 mr-1" />
-              Stop Playing
-            </Button>
-          )}
-          
-          {viewMode === 'backlog' && !game.is_completed && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 min-w-[120px]"
-                >
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Mark Done
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Mark Game as Completed</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to mark "{game.title}" as completed? This will move it to your completed games list.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleMarkCompleted}>
-                    Mark Completed
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-          
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Delete
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Game</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete "{game.title}"? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          
+          {/* Three-dot Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-              >
-                <MoreVertical className="h-3 w-3 mr-1" />
-                More
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-popover">
-            <DropdownMenuItem onClick={handleToggleToSort}>
-              {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleToggleNeedsPurchase}>
-              {game.needs_purchase ? "Remove from Wishlist" : "Add to Wishlist"}
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={handleSkip}
-              className="text-orange-600 focus:text-orange-600"
-            >
-              <SkipForward className="h-3 w-3 mr-2" />
-              Skip game
-            </DropdownMenuItem>
-          </DropdownMenuContent>
+            <DropdownMenuContent align="end" className="bg-popover">
+              <DropdownMenuItem onClick={onEdit}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              
+              {viewMode === 'backlog' && !game.is_currently_playing && (
+                <DropdownMenuItem onClick={handleToggleCurrentlyPlaying}>
+                  <Play className="h-4 w-4 mr-2" />
+                  Start Playing
+                </DropdownMenuItem>
+              )}
+              
+              {viewMode === 'backlog' && game.is_currently_playing && (
+                <DropdownMenuItem onClick={handleToggleCurrentlyPlaying}>
+                  <Square className="h-4 w-4 mr-2" />
+                  Stop Playing
+                </DropdownMenuItem>
+              )}
+              
+              {viewMode === 'backlog' && !game.is_completed && (
+                <DropdownMenuItem onClick={handleMarkCompleted}>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Mark Done
+                </DropdownMenuItem>
+              )}
+              
+              <DropdownMenuItem onClick={handleToggleToSort}>
+                {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem onClick={handleToggleNeedsPurchase}>
+                {game.needs_purchase ? "Remove from Wishlist" : "Add to Wishlist"}
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                onClick={handleSkip}
+                className="text-orange-600 focus:text-orange-600"
+              >
+                <SkipForward className="h-4 w-4 mr-2" />
+                Skip game
+              </DropdownMenuItem>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem 
+                    onSelect={(e) => e.preventDefault()}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Game</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{game.title}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
