@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -150,9 +151,9 @@ export const GameCard = ({ game, viewMode, onEdit, onDelete }: GameCardProps) =>
         </div>
 
         {game.comment && (
-          <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
-            {game.comment}
-          </p>
+          <div className="text-sm text-muted-foreground mt-3 line-clamp-2 prose prose-sm dark:prose-invert max-w-none [&>*]:my-0">
+            <ReactMarkdown>{game.comment}</ReactMarkdown>
+          </div>
         )}
 
         {game.tags.length > 0 && (

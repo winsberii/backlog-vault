@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import ReactMarkdown from "react-markdown";
 import { ViewMode } from "@/pages/Index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -792,7 +793,9 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               )}
               
               {viewMode !== 'backlog' && game.comment && (
-                <span className="truncate max-w-56">{game.comment}</span>
+                <span className="truncate max-w-56 prose prose-sm dark:prose-invert max-w-none [&>*]:my-0 [&>*]:inline">
+                  <ReactMarkdown>{game.comment}</ReactMarkdown>
+                </span>
               )}
             </div>
           </div>
