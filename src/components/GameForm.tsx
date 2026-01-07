@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink } from "lucide-react";
+import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3 } from "lucide-react";
 import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,6 +41,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [dateError, setDateError] = useState<string>("");
   const [playerTemplates, setPlayerTemplates] = useState<any[]>([]);
+  const [showCommentPreview, setShowCommentPreview] = useState(false);
   const autoFetchTriggeredRef = useRef<string>("");
   
   const [formData, setFormData] = useState({
@@ -933,15 +935,46 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="comment">Comments</Label>
-                    <Textarea
-                      id="comment"
-                      value={formData.comment}
-                      onChange={(e) => handleInputChange("comment", e.target.value)}
-                      placeholder="Your thoughts about the game..."
-                      rows={4}
-                      className="bg-background border-border"
-                    />
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="comment">Comments</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowCommentPreview(!showCommentPreview)}
+                        className="h-7 px-2 text-xs gap-1"
+                      >
+                        {showCommentPreview ? (
+                          <>
+                            <Edit3 className="h-3 w-3" />
+                            Edit
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="h-3 w-3" />
+                            Preview
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    {showCommentPreview ? (
+                      <div className="min-h-[100px] p-3 rounded-md border border-border bg-background prose prose-sm dark:prose-invert max-w-none">
+                        {formData.comment ? (
+                          <ReactMarkdown>{formData.comment}</ReactMarkdown>
+                        ) : (
+                          <span className="text-muted-foreground italic">No comment to preview</span>
+                        )}
+                      </div>
+                    ) : (
+                      <Textarea
+                        id="comment"
+                        value={formData.comment}
+                        onChange={(e) => handleInputChange("comment", e.target.value)}
+                        placeholder="Your thoughts about the game... (Markdown supported)"
+                        rows={4}
+                        className="bg-background border-border"
+                      />
+                    )}
                   </div>
                 </CardContent>
               </Card>
