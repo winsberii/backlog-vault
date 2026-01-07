@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3 } from "lucide-react";
+import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3, Columns } from "lucide-react";
 import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,7 +41,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [dateError, setDateError] = useState<string>("");
   const [playerTemplates, setPlayerTemplates] = useState<any[]>([]);
-  const [showCommentPreview, setShowCommentPreview] = useState(false);
+  const [commentViewMode, setCommentViewMode] = useState<'edit' | 'preview' | 'split'>('edit');
   const autoFetchTriggeredRef = useRef<string>("");
   
   const [formData, setFormData] = useState({
@@ -937,35 +937,41 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="comment">Comments</Label>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowCommentPreview(!showCommentPreview)}
-                        className="h-7 px-2 text-xs gap-1"
-                      >
-                        {showCommentPreview ? (
-                          <>
-                            <Edit3 className="h-3 w-3" />
-                            Edit
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="h-3 w-3" />
-                            Preview
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                    {showCommentPreview ? (
-                      <div className="min-h-[100px] p-3 rounded-md border border-border bg-background prose prose-sm dark:prose-invert max-w-none">
-                        {formData.comment ? (
-                          <ReactMarkdown>{formData.comment}</ReactMarkdown>
-                        ) : (
-                          <span className="text-muted-foreground italic">No comment to preview</span>
-                        )}
+                      <div className="flex gap-1">
+                        <Button
+                          type="button"
+                          variant={commentViewMode === 'edit' ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => setCommentViewMode('edit')}
+                          className="h-7 px-2 text-xs gap-1"
+                        >
+                          <Edit3 className="h-3 w-3" />
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={commentViewMode === 'split' ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => setCommentViewMode('split')}
+                          className="h-7 px-2 text-xs gap-1"
+                        >
+                          <Columns className="h-3 w-3" />
+                          Split
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={commentViewMode === 'preview' ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => setCommentViewMode('preview')}
+                          className="h-7 px-2 text-xs gap-1"
+                        >
+                          <Eye className="h-3 w-3" />
+                          Preview
+                        </Button>
                       </div>
-                    ) : (
+                    </div>
+                    
+                    {commentViewMode === 'edit' && (
                       <Textarea
                         id="comment"
                         value={formData.comment}
@@ -974,6 +980,36 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         rows={4}
                         className="bg-background border-border"
                       />
+                    )}
+                    
+                    {commentViewMode === 'preview' && (
+                      <div className="min-h-[100px] p-3 rounded-md border border-border bg-background prose prose-sm dark:prose-invert max-w-none">
+                        {formData.comment ? (
+                          <ReactMarkdown>{formData.comment}</ReactMarkdown>
+                        ) : (
+                          <span className="text-muted-foreground italic">No comment to preview</span>
+                        )}
+                      </div>
+                    )}
+                    
+                    {commentViewMode === 'split' && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Textarea
+                          id="comment"
+                          value={formData.comment}
+                          onChange={(e) => handleInputChange("comment", e.target.value)}
+                          placeholder="Your thoughts about the game... (Markdown supported)"
+                          rows={4}
+                          className="bg-background border-border"
+                        />
+                        <div className="min-h-[100px] p-3 rounded-md border border-border bg-background prose prose-sm dark:prose-invert max-w-none overflow-auto">
+                          {formData.comment ? (
+                            <ReactMarkdown>{formData.comment}</ReactMarkdown>
+                          ) : (
+                            <span className="text-muted-foreground italic">Preview</span>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 </CardContent>
