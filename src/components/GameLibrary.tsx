@@ -598,6 +598,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
           {/* Title and Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
+              {game.is_currently_playing && (
+                <Badge className="bg-accent text-accent-foreground h-5 px-1.5 text-[10px]">
+                  <Play className="h-2.5 w-2.5 mr-0.5" />
+                  Playing
+                </Badge>
+              )}
               <h3 className="font-medium text-sm truncate">{game.title}</h3>
               <span className="text-xs text-muted-foreground whitespace-nowrap">
                 {game.platform_info?.name}
