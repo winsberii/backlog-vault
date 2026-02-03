@@ -595,9 +595,17 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
             />
           </div>
           
-          {/* Title and Time */}
+          {/* Title and Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm truncate">{game.title}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm truncate">{game.title}</h3>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {game.platform_info?.name}
+                {game.playthrough_platform_info?.name && game.playthrough_platform_info.name !== game.platform_info?.name && (
+                  <> | {game.playthrough_platform_info.name}</>
+                )}
+              </span>
+            </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {game.estimated_duration && (
                 <span className="flex items-center gap-1">
