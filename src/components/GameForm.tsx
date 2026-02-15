@@ -704,33 +704,35 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="coverImage">Cover Image</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="file"
-                          accept="image/jpeg,image/jpg,image/png,image/webp"
-                          onChange={handleFileUpload}
-                          className="bg-background border-border"
-                          disabled={isUploading}
-                        />
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="icon"
-                          disabled={isUploading}
-                        >
-                          {isUploading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Upload className="h-4 w-4" />
-                          )}
-                        </Button>
+                    {!formData.coverImage && (
+                      <div className="space-y-2">
+                        <Label htmlFor="coverImage">Cover Image</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="file"
+                            accept="image/jpeg,image/jpg,image/png,image/webp"
+                            onChange={handleFileUpload}
+                            className="bg-background border-border"
+                            disabled={isUploading}
+                          />
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="icon"
+                            disabled={isUploading}
+                          >
+                            {isUploading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Upload className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        {isUploading && (
+                          <p className="text-sm text-muted-foreground">Uploading image...</p>
+                        )}
                       </div>
-                      {isUploading && (
-                        <p className="text-sm text-muted-foreground">Uploading image...</p>
-                      )}
-                    </div>
+                    )}
                   </div>
 
                   {formData.coverImage && (
