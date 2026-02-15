@@ -737,28 +737,51 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
                   {formData.coverImage && (
                     <div className="mt-4 space-y-2">
-                      <div className="relative inline-block">
-                        <img 
-                          src={formData.coverImage} 
-                          alt="Cover preview" 
-                          className="w-32 h-48 object-contain rounded border bg-muted transition-transform duration-300 hover:scale-[2] hover:z-50 cursor-pointer"
-                          onDoubleClick={() => {
-                            window.open(
-                              formData.coverImage,
-                              'Cover Image',
-                              'width=512,height=512,resizable=yes,scrollbars=yes'
-                            );
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2 z-10"
-                          onClick={handleRemoveImage}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+                      <Label>Cover Image</Label>
+                      <div className="flex items-start gap-4">
+                        <div className="relative inline-block">
+                          <img 
+                            src={formData.coverImage} 
+                            alt="Cover preview" 
+                            className="w-32 h-48 object-contain rounded border bg-muted transition-transform duration-300 hover:scale-[2] hover:z-50 cursor-pointer"
+                            onDoubleClick={() => {
+                              window.open(
+                                formData.coverImage,
+                                'Cover Image',
+                                'width=512,height=512,resizable=yes,scrollbars=yes'
+                              );
+                            }}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="gap-1"
+                            disabled={isUploading}
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/jpeg,image/jpg,image/png,image/webp';
+                              input.onchange = (e) => handleFileUpload(e as any);
+                              input.click();
+                            }}
+                          >
+                            {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                            Change
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="gap-1"
+                            onClick={handleRemoveImage}
+                          >
+                            <X className="h-3 w-3" />
+                            Remove
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}
