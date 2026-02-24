@@ -1058,17 +1058,15 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                          placeholder="https://retroachievements.org/game/..."
                          className="bg-background border-border"
                        />
-                       {formData.retroAchievementUrl && (
-                         <Button
-                           type="button"
-                           variant="outline"
-                           size="icon"
-                           onClick={() => window.open(formData.retroAchievementUrl, '_blank')}
-                           title="Open RetroAchievements page"
-                         >
-                           <ExternalLink className="h-4 w-4" />
-                         </Button>
-                       )}
+                       <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => window.open(formData.retroAchievementUrl || 'https://retroachievements.org', '_blank')}
+                          title="Open RetroAchievements page"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
                        <Button
                          type="button"
                          variant="outline"
@@ -1105,17 +1103,15 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                          placeholder="https://howlongtobeat.com/game/..."
                          className="bg-background border-border"
                        />
-                       {formData.howLongToBeatUrl && (
-                         <Button
-                           type="button"
-                           variant="outline"
-                           size="icon"
-                           onClick={() => window.open(formData.howLongToBeatUrl, '_blank')}
-                           title="Open HowLongToBeat page"
-                         >
-                           <ExternalLink className="h-4 w-4" />
-                         </Button>
-                       )}
+                       <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => window.open(formData.howLongToBeatUrl || 'https://howlongtobeat.com', '_blank')}
+                          title="Open HowLongToBeat page"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
                        <Button
                          type="button"
                          variant="outline"

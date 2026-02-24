@@ -643,14 +643,6 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-popover">
-              <DropdownMenuItem onClick={() => window.open(game.retro_achievement_url || 'https://retroachievements.org', '_blank')}>
-                <Trophy className="h-4 w-4 mr-2" />
-                RetroAchievements
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.open(game.how_long_to_beat_url || 'https://howlongtobeat.com', '_blank')}>
-                <Timer className="h-4 w-4 mr-2" />
-                HowLongToBeat
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={onEdit}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
@@ -843,24 +835,6 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
 
       {/* Actions */}
       <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => window.open(game.retro_achievement_url || 'https://retroachievements.org', '_blank')}
-          className="h-6 w-6 p-0"
-          title="RetroAchievements"
-        >
-          <Trophy className="h-3 w-3" />
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => window.open(game.how_long_to_beat_url || 'https://howlongtobeat.com', '_blank')}
-          className="h-6 w-6 p-0"
-          title="HowLongToBeat"
-        >
-          <Timer className="h-3 w-3" />
-        </Button>
         <Button
           size="sm"
           variant="ghost"
