@@ -936,36 +936,6 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
           </AlertDialogContent>
         </AlertDialog>
         
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-              title="Delete game"
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Game</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete "{game.title}"? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -988,6 +958,34 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               <Copy className="h-3 w-3 mr-2" />
               Clone game
             </DropdownMenuItem>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-3 w-3 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Game</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete "{game.title}"? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
