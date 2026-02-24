@@ -23,7 +23,9 @@ import {
   Calendar,
   DollarSign,
   Wallet,
-  CheckCircle 
+  CheckCircle,
+  Trophy,
+  Timer
 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 
@@ -43,6 +45,8 @@ interface GameCardProps {
     price: number | null;
     comment: string;
     tags: string[];
+    retroAchievementUrl: string | null;
+    howLongToBeatUrl: string | null;
   };
   viewMode: ViewMode;
   onEdit: () => void;
@@ -172,7 +176,7 @@ export const GameCard = ({ game, viewMode, onEdit, onDelete }: GameCardProps) =>
         )}
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 space-x-2">
+      <CardFooter className="p-4 pt-0 flex flex-wrap gap-2">
         <Button
           size="sm"
           variant="outline"
@@ -181,6 +185,26 @@ export const GameCard = ({ game, viewMode, onEdit, onDelete }: GameCardProps) =>
         >
           <Edit className="h-3 w-3 mr-1" />
           Edit
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-border hover:bg-secondary/50"
+          onClick={() => window.open(game.retroAchievementUrl || 'https://retroachievements.org', '_blank')}
+          title="RetroAchievements"
+        >
+          <Trophy className="h-3 w-3" />
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-border hover:bg-secondary/50"
+          onClick={() => window.open(game.howLongToBeatUrl || 'https://howlongtobeat.com', '_blank')}
+          title="HowLongToBeat"
+        >
+          <Timer className="h-3 w-3" />
         </Button>
         
         {viewMode === 'backlog' && !game.isCurrentlyPlaying && (
