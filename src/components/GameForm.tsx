@@ -648,112 +648,61 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
             <TabsContent value="basic" className="space-y-4">
               <Card>
-                <CardHeader>
-                  <CardTitle>Basic Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Title *</Label>
-                      <Input
-                        id="title"
-                        value={formData.title}
-                        onChange={(e) => handleInputChange("title", e.target.value)}
-                        onBlur={handleTitleBlur}
-                        placeholder="Game title"
-                        required
-                        className="bg-background border-border"
-                      />
-                      {showDuplicateWarning && (
-                        <div className="bg-destructive/10 border border-destructive/50 text-destructive text-sm p-3 rounded-md">
-                          <p className="font-semibold">⚠️ Game already exists</p>
-                          <p className="mt-1">You already have {duplicateGames.length} game{duplicateGames.length > 1 ? 's' : ''} with this title in your library.</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="platform">Platform</Label>
-                      <Select value={formData.platform} onValueChange={(value) => handleInputChange("platform", value)}>
-                        <SelectTrigger className="bg-background border-border">
-                          <SelectValue placeholder="Select platform" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {platforms.map((platform) => (
-                            <SelectItem key={platform.id} value={platform.id}>
-                              {platform.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="playthroughPlatform">Playthrough Platform</Label>
-                      <Select value={formData.playthroughPlatform} onValueChange={(value) => handleInputChange("playthroughPlatform", value)}>
-                        <SelectTrigger className="bg-background border-border">
-                          <SelectValue placeholder="Select playthrough platform" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {activePlatforms.map((platform) => (
-                            <SelectItem key={platform.id} value={platform.id}>
-                              {platform.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {!formData.coverImage && (
-                      <div className="space-y-2">
-                        <Label htmlFor="coverImage">Cover Image</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            type="file"
-                            accept="image/jpeg,image/jpg,image/png,image/webp"
-                            onChange={handleFileUpload}
-                            className="bg-background border-border"
-                            disabled={isUploading}
-                          />
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="icon"
-                            disabled={isUploading}
-                          >
-                            {isUploading ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Upload className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                        {isUploading && (
-                          <p className="text-sm text-muted-foreground">Uploading image...</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {formData.coverImage && (
-                    <div className="mt-4 space-y-2">
-                      <Label>Cover Image</Label>
-                      <div className="flex items-start gap-4">
-                        <div className="relative inline-block">
-                          <img 
-                            src={formData.coverImage} 
-                            alt="Cover preview" 
-                            className="w-32 h-48 object-contain rounded border bg-muted transition-transform duration-300 hover:scale-[2] hover:z-50 cursor-pointer"
-                            onDoubleClick={() => {
-                              window.open(
-                                formData.coverImage,
-                                'Cover Image',
-                                'width=512,height=512,resizable=yes,scrollbars=yes'
-                              );
-                            }}
-                          />
-                        </div>
-                        <div className="flex flex-col gap-2">
+                <CardContent className="pt-6">
+                  <div className={`flex gap-6 ${isMobile ? 'flex-col' : ''}`}>
+                    {/* Cover Image - Left side */}
+                    <div className="flex flex-col items-center gap-2 shrink-0">
+                      {formData.coverImage ? (
+                        <>
+                          <div className="relative inline-block">
+                            <img 
+                              src={formData.coverImage} 
+                              alt="Cover preview" 
+                              className="w-32 h-48 object-contain rounded border bg-muted transition-transform duration-300 hover:scale-[2] hover:z-50 cursor-pointer"
+                              onDoubleClick={() => {
+                                window.open(
+                                  formData.coverImage,
+                                  'Cover Image',
+                                  'width=512,height=512,resizable=yes,scrollbars=yes'
+                                );
+                              }}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                              disabled={isUploading}
+                              onClick={() => {
+                                const input = document.createElement('input');
+                                input.type = 'file';
+                                input.accept = 'image/jpeg,image/jpg,image/png,image/webp';
+                                input.onchange = (e) => handleFileUpload(e as any);
+                                input.click();
+                              }}
+                            >
+                              {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                              Change
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="gap-1"
+                              onClick={handleRemoveImage}
+                            >
+                              <X className="h-3 w-3" />
+                              Remove
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-32 h-48 rounded border border-dashed border-border bg-muted flex items-center justify-center">
+                            <Upload className="h-8 w-8 text-muted-foreground" />
+                          </div>
                           <Button
                             type="button"
                             variant="outline"
@@ -769,22 +718,69 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                             }}
                           >
                             {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                            Change
+                            Upload
                           </Button>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="gap-1"
-                            onClick={handleRemoveImage}
-                          >
-                            <X className="h-3 w-3" />
-                            Remove
-                          </Button>
-                        </div>
+                          {isUploading && (
+                            <p className="text-sm text-muted-foreground">Uploading...</p>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Fields - Right side */}
+                    <div className="flex-1 space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="title">Title *</Label>
+                        <Input
+                          id="title"
+                          value={formData.title}
+                          onChange={(e) => handleInputChange("title", e.target.value)}
+                          onBlur={handleTitleBlur}
+                          placeholder="Game title"
+                          required
+                          className="bg-background border-border"
+                        />
+                        {showDuplicateWarning && (
+                          <div className="bg-destructive/10 border border-destructive/50 text-destructive text-sm p-3 rounded-md">
+                            <p className="font-semibold">⚠️ Game already exists</p>
+                            <p className="mt-1">You already have {duplicateGames.length} game{duplicateGames.length > 1 ? 's' : ''} with this title in your library.</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="platform">Platform</Label>
+                        <Select value={formData.platform} onValueChange={(value) => handleInputChange("platform", value)}>
+                          <SelectTrigger className="bg-background border-border">
+                            <SelectValue placeholder="Select platform" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {platforms.map((platform) => (
+                              <SelectItem key={platform.id} value={platform.id}>
+                                {platform.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="playthroughPlatform">Playthrough Platform</Label>
+                        <Select value={formData.playthroughPlatform} onValueChange={(value) => handleInputChange("playthroughPlatform", value)}>
+                          <SelectTrigger className="bg-background border-border">
+                            <SelectValue placeholder="Select playthrough platform" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {activePlatforms.map((platform) => (
+                              <SelectItem key={platform.id} value={platform.id}>
+                                {platform.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
