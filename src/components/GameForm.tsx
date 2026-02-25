@@ -787,94 +787,69 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
             <TabsContent value="status" className="space-y-4">
               <Card>
-                <CardHeader>
-                  <CardTitle>Game Status</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="currentlyPlaying">Currently Playing</Label>
+                <CardContent className="pt-6 space-y-4">
+                  {/* Group: Currently Playing - To Sort */}
+                  <div className="flex items-center gap-4 rounded-lg border border-border p-4">
+                    <div className="flex items-center gap-2 flex-1">
                       <Switch
                         id="currentlyPlaying"
                         checked={formData.isCurrentlyPlaying}
                         onCheckedChange={(checked) => handleInputChange("isCurrentlyPlaying", checked)}
                       />
+                      <Label htmlFor="currentlyPlaying">Currently Playing</Label>
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="completed">Completed</Label>
-                      <Switch
-                        id="completed"
-                        checked={formData.isCompleted}
-                        onCheckedChange={(checked) => handleInputChange("isCompleted", checked)}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="needsPurchase">Needs Purchase</Label>
-                      <Switch
-                        id="needsPurchase"
-                        checked={formData.needsPurchase}
-                        onCheckedChange={(checked) => handleInputChange("needsPurchase", checked)}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="tosort">To Sort</Label>
+                    <div className="flex items-center gap-2 flex-1">
                       <Switch
                         id="tosort"
                         checked={formData.tosort}
                         onCheckedChange={(checked) => handleInputChange("tosort", checked)}
                       />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="skipped">Skipped</Label>
-                      <Switch
-                        id="skipped"
-                        checked={formData.isSkipped}
-                        onCheckedChange={(checked) => handleInputChange("isSkipped", checked)}
-                      />
+                      <Label htmlFor="tosort">To Sort</Label>
                     </div>
                   </div>
 
-                  {formData.isCompleted && (
-                    <div className="space-y-2">
-                      <Label htmlFor="completionDate">Completion Date</Label>
-                      <Input
-                        id="completionDate"
-                        type="text"
-                        placeholder="YYYY-MM-DD or DD.MM.YYYY or MM/DD/YYYY"
-                        value={formData.completionDate}
-                        onChange={(e) => handleInputChange("completionDate", e.target.value)}
-                        onBlur={(e) => handleDateBlur("completionDate", e.target.value)}
-                        className={`bg-background border-border ${dateError ? 'border-destructive' : ''}`}
+                  {/* Group: Completed - Date */}
+                  <div className="rounded-lg border border-border p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="completed"
+                        checked={formData.isCompleted}
+                        onCheckedChange={(checked) => handleInputChange("isCompleted", checked)}
                       />
-                      {dateError && (
-                        <p className="text-sm text-destructive">{dateError}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        You can type or paste a date in various formats
-                      </p>
+                      <Label htmlFor="completed">Completed</Label>
                     </div>
-                  )}
+                    {formData.isCompleted && (
+                      <div className="space-y-1">
+                        <Input
+                          id="completionDate"
+                          type="text"
+                          placeholder="YYYY-MM-DD or DD.MM.YYYY or MM/DD/YYYY"
+                          value={formData.completionDate}
+                          onChange={(e) => handleInputChange("completionDate", e.target.value)}
+                          onBlur={(e) => handleDateBlur("completionDate", e.target.value)}
+                          className={`bg-background border-border ${dateError ? 'border-destructive' : ''}`}
+                        />
+                        {dateError && (
+                          <p className="text-sm text-destructive">{dateError}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          You can type or paste a date in various formats
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
-                  {formData.isSkipped && (
-                    <div className="space-y-2">
-                      <Label htmlFor="skippedDate">Skipped Date</Label>
-                      <Input
-                        id="skippedDate"
-                        type="date"
-                        value={formData.skippedDate}
-                        onChange={(e) => handleInputChange("skippedDate", e.target.value)}
-                        className="bg-background border-border"
+                  {/* Group: Needs Purchase - Price */}
+                  <div className="rounded-lg border border-border p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="needsPurchase"
+                        checked={formData.needsPurchase}
+                        onCheckedChange={(checked) => handleInputChange("needsPurchase", checked)}
                       />
+                      <Label htmlFor="needsPurchase">Needs Purchase</Label>
                     </div>
-                  )}
-
-                  {formData.needsPurchase && (
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Price</Label>
+                    {formData.needsPurchase && (
                       <Input
                         id="price"
                         type="number"
@@ -884,8 +859,29 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         placeholder="0.00"
                         className="bg-background border-border"
                       />
+                    )}
+                  </div>
+
+                  {/* Group: Skipped - Date */}
+                  <div className="rounded-lg border border-border p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="skipped"
+                        checked={formData.isSkipped}
+                        onCheckedChange={(checked) => handleInputChange("isSkipped", checked)}
+                      />
+                      <Label htmlFor="skipped">Skipped</Label>
                     </div>
-                  )}
+                    {formData.isSkipped && (
+                      <Input
+                        id="skippedDate"
+                        type="date"
+                        value={formData.skippedDate}
+                        onChange={(e) => handleInputChange("skippedDate", e.target.value)}
+                        className="bg-background border-border"
+                      />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
