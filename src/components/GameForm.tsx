@@ -649,7 +649,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
             <TabsContent value="basic" className="space-y-4">
               <Card>
                 <CardContent className="pt-6">
-                  <div className={`flex gap-6 ${isMobile ? 'flex-col' : ''}`}>
+                  <div className={`flex gap-6 ${isMobile ? 'flex-col' : 'items-center'}`}>
                     {/* Cover Image - Left side */}
                     <div className="flex flex-col items-center gap-2 shrink-0">
                       {formData.coverImage ? (
