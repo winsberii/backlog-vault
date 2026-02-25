@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -156,7 +157,7 @@ export const GameCard = ({ game, viewMode, onEdit, onDelete }: GameCardProps) =>
 
         {game.comment && (
           <div className="text-sm text-muted-foreground mt-3 line-clamp-2 prose prose-sm dark:prose-invert max-w-none [&>*]:my-0">
-            <ReactMarkdown>{game.comment}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkBreaks]}>{game.comment}</ReactMarkdown>
           </div>
         )}
 
