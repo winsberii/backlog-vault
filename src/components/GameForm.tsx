@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -999,7 +1000,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                     {commentViewMode === 'preview' && (
                       <div className="min-h-[100px] p-3 rounded-md border border-border bg-background prose prose-sm dark:prose-invert max-w-none">
                         {formData.comment ? (
-                          <ReactMarkdown>{formData.comment}</ReactMarkdown>
+                          <ReactMarkdown remarkPlugins={[remarkBreaks]}>{formData.comment}</ReactMarkdown>
                         ) : (
                           <span className="text-muted-foreground italic">No comment to preview</span>
                         )}
@@ -1018,7 +1019,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         />
                         <div className="min-h-[100px] p-3 rounded-md border border-border bg-background prose prose-sm dark:prose-invert max-w-none overflow-auto">
                           {formData.comment ? (
-                            <ReactMarkdown>{formData.comment}</ReactMarkdown>
+                            <ReactMarkdown remarkPlugins={[remarkBreaks]}>{formData.comment}</ReactMarkdown>
                           ) : (
                             <span className="text-muted-foreground italic">Preview</span>
                           )}
