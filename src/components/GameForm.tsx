@@ -1033,10 +1033,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
             <TabsContent value="integration" className="space-y-4">
               <Card>
-                  <CardHeader>
-                   <CardTitle>External Integrations</CardTitle>
-                 </CardHeader>
-                  <CardContent className="space-y-4">
+                <CardContent className="pt-6 space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="retroAchievementUrl">RetroAchievements URL</Label>
                      <div className="flex gap-2">
