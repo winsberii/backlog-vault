@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   AlertDialog,
@@ -42,7 +43,8 @@ import {
   SkipForward,
   MoreVertical,
   Users,
-  Timer
+  Timer,
+  ChevronDown
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -259,97 +261,112 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="bg-card border border-border rounded-lg p-4 space-y-4 z-10 relative">
-          <h3 className="font-medium text-sm">Filters</h3>
+        <div className="bg-card border border-border rounded-lg p-4 space-y-3 z-10 relative">
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium text-sm">Filters</h3>
+            {(selectedPlatforms.length > 0 || selectedPlaythroughPlatforms.length > 0 || selectedNumberOfPlayers.length > 0) && (
+              <button
+                onClick={() => {
+                  setSelectedPlatforms([]);
+                  setSelectedPlaythroughPlatforms([]);
+                  setSelectedNumberOfPlayers([]);
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
 
           {/* Platform Filter */}
           {uniquePlatforms.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Platforms</label>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {uniquePlatforms.map((platform) => (
-                  <div key={platform} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`platform-${platform}`}
-                      checked={selectedPlatforms.includes(platform)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedPlatforms([...selectedPlatforms, platform]);
-                        } else {
-                          setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform));
-                        }
-                      }}
-                    />
-                    <label htmlFor={`platform-${platform}`} className="text-xs">{platform}</label>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center justify-between w-full py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors group">
+                <span>Platforms</span>
+                <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1.5">
+                  {uniquePlatforms.map((platform) => (
+                    <div key={platform} className="flex items-center space-x-1.5">
+                      <Checkbox
+                        id={`platform-${platform}`}
+                        checked={selectedPlatforms.includes(platform)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedPlatforms([...selectedPlatforms, platform]);
+                          } else {
+                            setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform));
+                          }
+                        }}
+                      />
+                      <label htmlFor={`platform-${platform}`} className="text-xs cursor-pointer">{platform}</label>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           )}
 
           {/* Playthrough Platform Filter */}
           {uniquePlaythroughPlatforms.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Playthrough Platforms</label>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {uniquePlaythroughPlatforms.map((platform) => (
-                  <div key={platform} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`playthrough-platform-${platform}`}
-                      checked={selectedPlaythroughPlatforms.includes(platform)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedPlaythroughPlatforms([...selectedPlaythroughPlatforms, platform]);
-                        } else {
-                          setSelectedPlaythroughPlatforms(selectedPlaythroughPlatforms.filter(p => p !== platform));
-                        }
-                      }}
-                    />
-                    <label htmlFor={`playthrough-platform-${platform}`} className="text-xs">{platform}</label>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center justify-between w-full py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors group">
+                <span>Playthrough Platforms</span>
+                <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1.5">
+                  {uniquePlaythroughPlatforms.map((platform) => (
+                    <div key={platform} className="flex items-center space-x-1.5">
+                      <Checkbox
+                        id={`playthrough-platform-${platform}`}
+                        checked={selectedPlaythroughPlatforms.includes(platform)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedPlaythroughPlatforms([...selectedPlaythroughPlatforms, platform]);
+                          } else {
+                            setSelectedPlaythroughPlatforms(selectedPlaythroughPlatforms.filter(p => p !== platform));
+                          }
+                        }}
+                      />
+                      <label htmlFor={`playthrough-platform-${platform}`} className="text-xs cursor-pointer">{platform}</label>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           )}
 
           {/* Number of Players Filter */}
           {uniqueNumberOfPlayers.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Number of Players</label>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {uniqueNumberOfPlayers.map((players) => (
-                  <div key={players} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`players-${players}`}
-                      checked={selectedNumberOfPlayers.includes(players)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedNumberOfPlayers([...selectedNumberOfPlayers, players]);
-                        } else {
-                          setSelectedNumberOfPlayers(selectedNumberOfPlayers.filter(p => p !== players));
-                        }
-                      }}
-                    />
-                    <label htmlFor={`players-${players}`} className="text-xs">{players}</label>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center justify-between w-full py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors group">
+                <span>Number of Players</span>
+                <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1.5">
+                  {uniqueNumberOfPlayers.map((players) => (
+                    <div key={players} className="flex items-center space-x-1.5">
+                      <Checkbox
+                        id={`players-${players}`}
+                        checked={selectedNumberOfPlayers.includes(players)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedNumberOfPlayers([...selectedNumberOfPlayers, players]);
+                          } else {
+                            setSelectedNumberOfPlayers(selectedNumberOfPlayers.filter(p => p !== players));
+                          }
+                        }}
+                      />
+                      <label htmlFor={`players-${players}`} className="text-xs cursor-pointer">{players}</label>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           )}
-
-          {/* Clear Filters */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => {
-              setSelectedPlatforms([]);
-              setSelectedPlaythroughPlatforms([]);
-              setSelectedNumberOfPlayers([]);
-            }}
-            className="w-full"
-          >
-            Clear All Filters
-          </Button>
         </div>
       )}
 
