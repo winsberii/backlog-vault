@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3, Columns } from "lucide-react";
+import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3, Columns, Store } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,6 +43,8 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [dateError, setDateError] = useState<string>("");
   const [playerTemplates, setPlayerTemplates] = useState<any[]>([]);
+  const [stores, setStores] = useState<any[]>([]);
+  const [selectedStoreIds, setSelectedStoreIds] = useState<string[]>([]);
   const [commentViewMode, setCommentViewMode] = useState<'edit' | 'preview' | 'split'>('edit');
   const autoFetchTriggeredRef = useRef<string>("");
   
@@ -90,9 +93,27 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
           .select('*')
           .order('display_order');
 
+        // Fetch stores
+        const { data: storesData } = await supabase
+          .from('stores')
+          .select('*')
+          .order('name');
+
         setPlatforms(allPlatforms || []);
         setActivePlatforms(activePlatformsData || []);
         setPlayerTemplates(templatesData || []);
+        setStores(storesData || []);
+
+        // Fetch selected stores for existing game
+        if (game?.id) {
+          const { data: gameStoresData } = await supabase
+            .from('game_stores')
+            .select('store_id')
+            .eq('game_id', game.id);
+          if (gameStoresData) {
+            setSelectedStoreIds(gameStoresData.map((gs: any) => gs.store_id));
+          }
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -257,24 +278,48 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
       };
 
       let error;
+      let savedGameId = game?.id;
       
       if (game?.id) {
-        // Update existing game
         const { error: updateError } = await supabase
           .from('games')
           .update(gameData)
           .eq('id', game.id);
         error = updateError;
       } else {
-        // Insert new game
-        const { error: insertError } = await supabase
+        const { data: insertData, error: insertError } = await supabase
           .from('games')
-          .insert([gameData]);
+          .insert([gameData])
+          .select('id')
+          .single();
         error = insertError;
+        if (insertData) savedGameId = insertData.id;
       }
 
       if (error) {
         throw error;
+      }
+
+      // Save game stores
+      if (savedGameId && user) {
+        // Delete existing game_stores
+        await supabase
+          .from('game_stores')
+          .delete()
+          .eq('game_id', savedGameId);
+
+        // Insert new ones
+        if (selectedStoreIds.length > 0) {
+          const gameStoresData = selectedStoreIds.map(storeId => ({
+            game_id: savedGameId,
+            store_id: storeId,
+            user_id: user.id,
+          }));
+          const { error: storesError } = await supabase
+            .from('game_stores')
+            .insert(gameStoresData);
+          if (storesError) console.error('Error saving game stores:', storesError);
+        }
       }
 
       toast({
@@ -947,6 +992,36 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+
+                  {/* Stores */}
+                  <div className="space-y-2">
+                    <Label>Stores</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {stores.map((store) => {
+                        const isSelected = selectedStoreIds.includes(store.id);
+                        return (
+                          <Badge
+                            key={store.id}
+                            variant={isSelected ? "default" : "outline"}
+                            className={`cursor-pointer transition-colors ${isSelected ? '' : 'hover:bg-secondary/80'}`}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedStoreIds(selectedStoreIds.filter(id => id !== store.id));
+                              } else {
+                                setSelectedStoreIds([...selectedStoreIds, store.id]);
+                              }
+                            }}
+                          >
+                            {isSelected && <X className="h-3 w-3 mr-1" />}
+                            {store.name}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                    {selectedStoreIds.length > 0 && (
+                      <p className="text-xs text-muted-foreground">{selectedStoreIds.length} store{selectedStoreIds.length > 1 ? 's' : ''} selected</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
