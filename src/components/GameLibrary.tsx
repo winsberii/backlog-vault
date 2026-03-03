@@ -45,7 +45,7 @@ import {
   Users,
   Timer,
   ChevronDown,
-  Store
+  ShoppingBag
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -834,7 +834,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               )}
               {game.game_stores && game.game_stores.length > 0 && (
                 <span className="flex items-center gap-1">
-                  <Store className="h-2.5 w-2.5" />
+                  <ShoppingBag className="h-2.5 w-2.5" />
                   {game.game_stores.map((gs: any) => gs.stores?.name).filter(Boolean).join(', ')}
                 </span>
               )}
