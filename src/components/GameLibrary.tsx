@@ -44,7 +44,8 @@ import {
   MoreVertical,
   Users,
   Timer,
-  ChevronDown
+  ChevronDown,
+  Store
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -83,7 +84,8 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
         .select(`
           *,
           platform_info:platform(name),
-          playthrough_platform_info:playthrough_platform(name)
+          playthrough_platform_info:playthrough_platform(name),
+          game_stores(store_id, stores(name))
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -828,6 +830,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
               {viewMode !== 'backlog' && game.comment && (
                 <span className="truncate max-w-56 prose prose-sm dark:prose-invert max-w-none [&>*]:my-0 [&>*]:inline">
                   <ReactMarkdown remarkPlugins={[remarkBreaks]}>{game.comment}</ReactMarkdown>
+                </span>
+              )}
+              {game.game_stores && game.game_stores.length > 0 && (
+                <span className="flex items-center gap-1">
+                  <Store className="h-2.5 w-2.5" />
+                  {game.game_stores.map((gs: any) => gs.stores?.name).filter(Boolean).join(', ')}
                 </span>
               )}
             </div>
