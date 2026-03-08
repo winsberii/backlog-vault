@@ -88,7 +88,7 @@ const Index = () => {
                currentView === 'platforms' ? 'Platforms' :
                'Completed Games'}
             </h2>
-            {currentView !== 'api-keys' && (
+            {currentView !== 'api-keys' && currentView !== 'platforms' && (
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                 <span className="flex items-center gap-1">
                   <Gamepad className="h-4 w-4" />
