@@ -59,7 +59,7 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
             <DrawerTrigger asChild>
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <Menu className="h-4 w-4" />
-                {navItems.find(item => item.key === currentView)?.label || (currentView === 'api-keys' ? 'API Keys' : 'Menu')}
+                {navItems.find(item => item.key === currentView)?.label || (currentView === 'api-keys' ? 'API Keys' : currentView === 'platforms' ? 'Platforms' : 'Menu')}
               </Button>
             </DrawerTrigger>
             <div className="flex items-center space-x-2">
