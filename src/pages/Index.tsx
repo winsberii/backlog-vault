@@ -85,6 +85,7 @@ const Index = () => {
                currentView === 'tosort' ? 'To Sort' : 
                currentView === 'skipped' ? 'Skipped Games' : 
                currentView === 'api-keys' ? 'API Keys' :
+               currentView === 'platforms' ? 'Platforms' :
                'Completed Games'}
             </h2>
             {currentView !== 'api-keys' && (
