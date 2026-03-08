@@ -125,9 +125,11 @@ const Index = () => {
           )}
         </div>
 
-        {/* Game Library or API Key Manager */}
+        {/* Game Library, API Key Manager, or Platform Manager */}
         {currentView === 'api-keys' ? (
           <ApiKeyManager />
+        ) : currentView === 'platforms' ? (
+          <PlatformManager />
         ) : (
           <GameLibrary 
             viewMode={currentView} 
