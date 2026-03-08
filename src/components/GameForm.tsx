@@ -78,14 +78,14 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
         const { data: allPlatforms } = await supabase
           .from('platforms')
           .select('*')
-          .order('name');
+          .order('display_order');
         
         // Fetch only active platforms for playthrough platform selection
         const { data: activePlatformsData } = await supabase
           .from('platforms')
           .select('*')
           .eq('active', true)
-          .order('name');
+          .order('display_order');
 
         // Fetch player templates
         const { data: templatesData } = await supabase
