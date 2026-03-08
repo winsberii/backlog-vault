@@ -103,7 +103,7 @@ const Index = () => {
               </div>
             )}
           </div>
-          {currentView !== 'api-keys' && (
+          {currentView !== 'api-keys' && currentView !== 'platforms' && (
             <div className={`flex ${isMobile ? 'flex-col gap-3' : 'gap-2'}`}>
             <Button
               onClick={() => setShowImportExport(true)}
