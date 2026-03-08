@@ -66,6 +66,14 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
               <Button
                 variant="outline"
                 size="icon"
+                onClick={() => onViewChange('platforms')}
+                title="Platforms"
+              >
+                <Monitor className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
                 onClick={() => onViewChange('api-keys')}
                 title="API Keys"
               >
