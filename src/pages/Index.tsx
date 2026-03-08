@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, FileSpreadsheet, Gamepad, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort' | 'skipped' | 'api-keys';
+import { PlatformManager } from "@/components/PlatformManager";
+export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort' | 'skipped' | 'api-keys' | 'platforms';
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('backlog');
   const [showGameForm, setShowGameForm] = useState(false);
@@ -84,9 +85,10 @@ const Index = () => {
                currentView === 'tosort' ? 'To Sort' : 
                currentView === 'skipped' ? 'Skipped Games' : 
                currentView === 'api-keys' ? 'API Keys' :
+               currentView === 'platforms' ? 'Platforms' :
                'Completed Games'}
             </h2>
-            {currentView !== 'api-keys' && (
+            {currentView !== 'api-keys' && currentView !== 'platforms' && (
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                 <span className="flex items-center gap-1">
                   <Gamepad className="h-4 w-4" />
@@ -101,7 +103,7 @@ const Index = () => {
               </div>
             )}
           </div>
-          {currentView !== 'api-keys' && (
+          {currentView !== 'api-keys' && currentView !== 'platforms' && (
             <div className={`flex ${isMobile ? 'flex-col gap-3' : 'gap-2'}`}>
             <Button
               onClick={() => setShowImportExport(true)}
@@ -124,9 +126,11 @@ const Index = () => {
           )}
         </div>
 
-        {/* Game Library or API Key Manager */}
+        {/* Game Library, API Key Manager, or Platform Manager */}
         {currentView === 'api-keys' ? (
           <ApiKeyManager />
+        ) : currentView === 'platforms' ? (
+          <PlatformManager />
         ) : (
           <GameLibrary 
             viewMode={currentView} 

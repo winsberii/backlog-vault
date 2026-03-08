@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ViewMode } from "@/pages/Index";
-import { Gamepad2, Heart, Trophy, Filter, Menu, X, SkipForward, Key } from "lucide-react";
+import { Gamepad2, Heart, Trophy, Filter, Menu, X, SkipForward, Key, Monitor } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { CurrencySelector } from "./CurrencySelector";
 import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -59,10 +59,18 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
             <DrawerTrigger asChild>
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <Menu className="h-4 w-4" />
-                {navItems.find(item => item.key === currentView)?.label || (currentView === 'api-keys' ? 'API Keys' : 'Menu')}
+                {navItems.find(item => item.key === currentView)?.label || (currentView === 'api-keys' ? 'API Keys' : currentView === 'platforms' ? 'Platforms' : 'Menu')}
               </Button>
             </DrawerTrigger>
             <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => onViewChange('platforms')}
+                title="Platforms"
+              >
+                <Monitor className="h-4 w-4" />
+              </Button>
               <Button
                 variant="outline"
                 size="icon"
@@ -133,6 +141,14 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
       })}
       </div>
       <div className="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => onViewChange('platforms')}
+          title="Platforms"
+        >
+          <Monitor className="h-4 w-4" />
+        </Button>
         <Button
           variant="outline"
           size="icon"
