@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ViewMode } from "@/pages/Index";
-import { Gamepad2, Heart, Trophy, Filter, Menu, X, SkipForward, Key } from "lucide-react";
+import { Gamepad2, Heart, Trophy, Filter, Menu, X, SkipForward, Key, Monitor } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { CurrencySelector } from "./CurrencySelector";
 import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
