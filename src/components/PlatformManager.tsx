@@ -225,7 +225,7 @@ export const PlatformManager = () => {
                     </Button>
                   </div>
                 ) : (
-                  <span className={`text-sm truncate ${!platform.active ? "text-muted-foreground line-through" : ""}`}>
+                  <span className={`text-sm truncate ${platform.active ? "text-primary font-medium" : "text-muted-foreground"}`}>
                     {platform.name}
                   </span>
                 )}
