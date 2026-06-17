@@ -118,30 +118,59 @@ serve(async (req) => {
     // Extract main story duration
     let mainStoryHours = 0
     
-    // Look for different patterns that might contain the main story duration
-    const durationPatterns = [
-      /Main\s*Story[^<]*?(\d+(?:\.\d+)?)\s*(?:Hours?|h)/i,
-      /Single-Player[^<]*?(\d+(?:\.\d+)?)\s*(?:Hours?|h)/i,
-      /Completionist[^<]*?(\d+(?:\.\d+)?)\s*(?:Hours?|h)/i,
-      /"time_detail"[^>]*>(\d+(?:\.\d+)?)/i,
-      /(\d+(?:\.\d+)?)\s*(?:Hours?|h)[^<]*?Main/i
+    // Helper to parse HLTB time strings like "5½ Hours", "5.5 Hours", "45 Mins"
+    const parseHltbTime = (raw: string): number => {
+      if (!raw) return 0
+      // Replace unicode fractions
+      const normalized = raw
+        .replace(/½/g, '.5')
+        .replace(/¼/g, '.25')
+        .replace(/¾/g, '.75')
+      const hoursMatch = normalized.match(/(\d+(?:\.\d+)?)\s*Hours?/i)
+      if (hoursMatch) return parseFloat(hoursMatch[1])
+      const minsMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:Mins?|Minutes?)/i)
+      if (minsMatch) return parseFloat(minsMatch[1]) / 60
+      return 0
+    }
+
+    // Primary: modern HLTB structure uses <h4>Main Story</h4><h5>5½ Hours</h5>
+    const labeledPatterns: Array<{ label: string; regex: RegExp }> = [
+      { label: 'Main Story', regex: /<h4>\s*Main\s*Story\s*<\/h4>\s*<h5>([^<]+)<\/h5>/i },
+      { label: 'Single-Player', regex: /<h4>\s*Single[- ]Player\s*<\/h4>\s*<h5>([^<]+)<\/h5>/i },
+      { label: 'Solo', regex: /<h4>\s*Solo\s*<\/h4>\s*<h5>([^<]+)<\/h5>/i },
+      { label: 'Main + Sides', regex: /<h4>\s*Main\s*\+\s*Sides?\s*<\/h4>\s*<h5>([^<]+)<\/h5>/i },
+      { label: 'Completionist', regex: /<h4>\s*Completionist\s*<\/h4>\s*<h5>([^<]+)<\/h5>/i },
+      { label: 'HowLongToBeat', regex: /<h4>\s*HowLongToBeat\s*<\/h4>\s*<h5>([^<]+)<\/h5>/i },
     ]
 
-    for (const pattern of durationPatterns) {
-      const match = html.match(pattern)
+    for (const { label, regex } of labeledPatterns) {
+      const match = html.match(regex)
       if (match) {
-        mainStoryHours = parseFloat(match[1])
-        break
+        const hours = parseHltbTime(match[1])
+        if (hours > 0) {
+          mainStoryHours = hours
+          console.log(`Matched "${label}" => "${match[1]}" => ${hours}h`)
+          break
+        }
       }
     }
 
-    // If no main story found, try to extract any duration number
+    // Fallback: legacy patterns
     if (mainStoryHours === 0) {
-      const anyDurationMatch = html.match(/(\d+(?:\.\d+)?)\s*(?:Hours?|h)/i)
-      if (anyDurationMatch) {
-        mainStoryHours = parseFloat(anyDurationMatch[1])
+      const legacyPatterns = [
+        /Main\s*Story[\s\S]{0,80}?(\d+(?:[.½¼¾]\d*)?)\s*(?:Hours?|Hrs?|h)/i,
+        /Single[- ]Player[\s\S]{0,80}?(\d+(?:[.½¼¾]\d*)?)\s*(?:Hours?|Hrs?|h)/i,
+        /Completionist[\s\S]{0,80}?(\d+(?:[.½¼¾]\d*)?)\s*(?:Hours?|Hrs?|h)/i,
+      ]
+      for (const pattern of legacyPatterns) {
+        const match = html.match(pattern)
+        if (match) {
+          mainStoryHours = parseHltbTime(match[0])
+          if (mainStoryHours > 0) break
+        }
       }
     }
+
 
     // Download and save cover image to Supabase storage
     let savedCoverImage = null
