@@ -71,6 +71,34 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   const [selectedPlaythroughPlatforms, setSelectedPlaythroughPlatforms] = useState<string[]>([]);
   const [selectedNumberOfPlayers, setSelectedNumberOfPlayers] = useState<string[]>([]);
 
+  // Only request the columns actually rendered by the list to reduce payload size.
+  const LIST_COLUMNS = `
+    id, title, cover_image, is_currently_playing, is_completed, needs_purchase,
+    estimated_duration, actual_playtime, completion_date, price, comment,
+    created_at, platform, playthrough_platform, tosort, achievements, skipped,
+    number_of_players,
+    platform_info:platform(name),
+    playthrough_platform_info:playthrough_platform(name),
+    game_stores(store_id, stores(name))
+  `;
+
+  const applyViewFilter = (query: any) => {
+    switch (viewMode) {
+      case 'backlog':
+        return query.eq('is_completed', false).eq('tosort', false).is('skipped', null);
+      case 'wishlist':
+        return query.eq('needs_purchase', true).eq('tosort', false).is('skipped', null);
+      case 'completed':
+        return query.eq('is_completed', true).eq('tosort', false).is('skipped', null);
+      case 'tosort':
+        return query.eq('tosort', true).is('skipped', null);
+      case 'skipped':
+        return query.not('skipped', 'is', null);
+      default:
+        return query;
+    }
+  };
+
   const fetchGames = async () => {
     if (!user) {
       setGames([]);
@@ -79,16 +107,14 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
     }
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('games')
-        .select(`
-          *,
-          platform_info:platform(name),
-          playthrough_platform_info:playthrough_platform(name),
-          game_stores(store_id, stores(name))
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .select(LIST_COLUMNS)
+        .eq('user_id', user.id);
+
+      query = applyViewFilter(query);
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
         throw error;
@@ -104,8 +130,17 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   };
 
   useEffect(() => {
+    setIsLoading(true);
     fetchGames();
-  }, [user, refreshTrigger]);
+  }, [user, refreshTrigger, viewMode]);
+
+  // Local mutation helpers — avoid a full refetch (and full payload) after each row action.
+  const patchGame = (id: string, patch: Record<string, any>) => {
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, ...patch } : g)));
+  };
+  const removeGame = (id: string) => {
+    setGames((prev) => prev.filter((g) => g.id !== id));
+  };
 
   // Get unique platforms for filter
   const uniquePlatforms = Array.from(new Set(games.map(game => game.platform_info?.name).filter(Boolean)));
@@ -381,6 +416,8 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
             viewMode={viewMode}
             onEdit={() => onEditGame(game)}
             onRefresh={fetchGames}
+            onPatch={patchGame}
+            onRemove={removeGame}
           />
         ))}
       </div>
@@ -408,9 +445,11 @@ interface GameListItemProps {
   viewMode: ViewMode;
   onEdit: () => void;
   onRefresh: () => Promise<void>;
+  onPatch: (id: string, patch: Record<string, any>) => void;
+  onRemove: (id: string) => void;
 }
 
-const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) => {
+const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: GameListItemProps) => {
   const { toast } = useToast();
   const { formatPrice } = useCurrency();
   const isMobile = useIsMobile();
@@ -435,7 +474,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         description: `${game.title} has been deleted from your library.`,
       });
 
-      await onRefresh();
+      onRemove(game.id);
     } catch (error: any) {
       console.error("Error deleting game:", error);
       toast({
@@ -462,7 +501,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         description: `${game.title} ${game.is_currently_playing ? 'removed from' : 'marked as'} currently playing.`,
       });
 
-      await onRefresh();
+      onPatch(game.id, { is_currently_playing: !game.is_currently_playing });
     } catch (error: any) {
       console.error("Error updating game status:", error);
       toast({
@@ -493,7 +532,15 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         description: `${game.title} has been marked as completed.`,
       });
 
-      await onRefresh();
+      if (viewMode === 'backlog') {
+        onRemove(game.id);
+      } else {
+        onPatch(game.id, {
+          is_completed: true,
+          is_currently_playing: false,
+          completion_date: new Date().toISOString().split('T')[0],
+        });
+      }
     } catch (error: any) {
       console.error("Error marking game as completed:", error);
       toast({
@@ -525,7 +572,16 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         description: `${game.title} has been removed from all lists.`,
       });
 
-      await onRefresh();
+      if (viewMode === 'skipped') {
+        onPatch(game.id, {
+          skipped: new Date().toISOString().split('T')[0],
+          is_currently_playing: false,
+          needs_purchase: false,
+          tosort: false,
+        });
+      } else {
+        onRemove(game.id);
+      }
     } catch (error: any) {
       console.error("Error skipping game:", error);
       toast({
@@ -554,7 +610,13 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         description: `${game.title} has been ${game.tosort ? 'removed from' : 'added to'} the To Sort list.`,
       });
 
-      await onRefresh();
+      const newTosort = !game.tosort;
+      // Row leaves the current view whenever the new tosort value disagrees with the tab.
+      if (viewMode === 'tosort' ? !newTosort : newTosort) {
+        onRemove(game.id);
+      } else {
+        onPatch(game.id, { tosort: newTosort });
+      }
     } catch (error: any) {
       console.error("Error toggling tosort status:", error);
       toast({
@@ -583,7 +645,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) 
         description: `${game.title} has been ${game.needs_purchase ? 'removed from' : 'added to'} the wishlist.`,
       });
 
-      await onRefresh();
+      const newNeeds = !game.needs_purchase;
+      if (viewMode === 'wishlist' && !newNeeds) {
+        onRemove(game.id);
+      } else {
+        onPatch(game.id, { needs_purchase: newNeeds });
+      }
     } catch (error: any) {
       console.error("Error toggling needs purchase status:", error);
       toast({
