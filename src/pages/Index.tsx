@@ -87,9 +87,10 @@ const Index = () => {
                currentView === 'skipped' ? 'Skipped Games' : 
                currentView === 'api-keys' ? 'API Keys' :
                currentView === 'platforms' ? 'Platforms' :
+               currentView === 'statistics' ? 'Statistics' :
                'Completed Games'}
             </h2>
-            {currentView !== 'api-keys' && currentView !== 'platforms' && (
+            {currentView !== 'api-keys' && currentView !== 'platforms' && currentView !== 'statistics' && (
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                 <span className="flex items-center gap-1">
                   <Gamepad className="h-4 w-4" />
@@ -104,7 +105,7 @@ const Index = () => {
               </div>
             )}
           </div>
-          {currentView !== 'api-keys' && currentView !== 'platforms' && (
+          {currentView !== 'api-keys' && currentView !== 'platforms' && currentView !== 'statistics' && (
             <div className={`flex ${isMobile ? 'flex-col gap-3' : 'gap-2'}`}>
             <Button
               onClick={() => setShowImportExport(true)}
@@ -127,11 +128,13 @@ const Index = () => {
           )}
         </div>
 
-        {/* Game Library, API Key Manager, or Platform Manager */}
+        {/* Game Library, API Key Manager, Platform Manager, or Statistics */}
         {currentView === 'api-keys' ? (
           <ApiKeyManager />
         ) : currentView === 'platforms' ? (
           <PlatformManager />
+        ) : currentView === 'statistics' ? (
+          <Statistics />
         ) : (
           <GameLibrary 
             viewMode={currentView} 
