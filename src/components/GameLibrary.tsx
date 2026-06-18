@@ -572,7 +572,16 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
         description: `${game.title} has been removed from all lists.`,
       });
 
-      await onRefresh();
+      if (viewMode === 'skipped') {
+        onPatch(game.id, {
+          skipped: new Date().toISOString().split('T')[0],
+          is_currently_playing: false,
+          needs_purchase: false,
+          tosort: false,
+        });
+      } else {
+        onRemove(game.id);
+      }
     } catch (error: any) {
       console.error("Error skipping game:", error);
       toast({
