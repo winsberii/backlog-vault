@@ -501,7 +501,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
         description: `${game.title} ${game.is_currently_playing ? 'removed from' : 'marked as'} currently playing.`,
       });
 
-      await onRefresh();
+      onPatch(game.id, { is_currently_playing: !game.is_currently_playing });
     } catch (error: any) {
       console.error("Error updating game status:", error);
       toast({
