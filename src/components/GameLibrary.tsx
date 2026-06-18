@@ -416,6 +416,8 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
             viewMode={viewMode}
             onEdit={() => onEditGame(game)}
             onRefresh={fetchGames}
+            onPatch={patchGame}
+            onRemove={removeGame}
           />
         ))}
       </div>
