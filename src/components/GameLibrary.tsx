@@ -610,7 +610,13 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
         description: `${game.title} has been ${game.tosort ? 'removed from' : 'added to'} the To Sort list.`,
       });
 
-      await onRefresh();
+      const newTosort = !game.tosort;
+      // Row leaves the current view whenever the new tosort value disagrees with the tab.
+      if (viewMode === 'tosort' ? !newTosort : newTosort) {
+        onRemove(game.id);
+      } else {
+        onPatch(game.id, { tosort: newTosort });
+      }
     } catch (error: any) {
       console.error("Error toggling tosort status:", error);
       toast({
