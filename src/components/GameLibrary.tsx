@@ -71,6 +71,34 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   const [selectedPlaythroughPlatforms, setSelectedPlaythroughPlatforms] = useState<string[]>([]);
   const [selectedNumberOfPlayers, setSelectedNumberOfPlayers] = useState<string[]>([]);
 
+  // Only request the columns actually rendered by the list to reduce payload size.
+  const LIST_COLUMNS = `
+    id, title, cover_image, is_currently_playing, is_completed, needs_purchase,
+    estimated_duration, actual_playtime, completion_date, price, comment,
+    created_at, platform, playthrough_platform, tosort, achievements, skipped,
+    number_of_players,
+    platform_info:platform(name),
+    playthrough_platform_info:playthrough_platform(name),
+    game_stores(store_id, stores(name))
+  `;
+
+  const applyViewFilter = (query: any) => {
+    switch (viewMode) {
+      case 'backlog':
+        return query.eq('is_completed', false).eq('tosort', false).is('skipped', null);
+      case 'wishlist':
+        return query.eq('needs_purchase', true).eq('tosort', false).is('skipped', null);
+      case 'completed':
+        return query.eq('is_completed', true).eq('tosort', false).is('skipped', null);
+      case 'tosort':
+        return query.eq('tosort', true).is('skipped', null);
+      case 'skipped':
+        return query.not('skipped', 'is', null);
+      default:
+        return query;
+    }
+  };
+
   const fetchGames = async () => {
     if (!user) {
       setGames([]);
@@ -79,16 +107,14 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
     }
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('games')
-        .select(`
-          *,
-          platform_info:platform(name),
-          playthrough_platform_info:playthrough_platform(name),
-          game_stores(store_id, stores(name))
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .select(LIST_COLUMNS)
+        .eq('user_id', user.id);
+
+      query = applyViewFilter(query);
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
         throw error;
@@ -104,8 +130,17 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   };
 
   useEffect(() => {
+    setIsLoading(true);
     fetchGames();
-  }, [user, refreshTrigger]);
+  }, [user, refreshTrigger, viewMode]);
+
+  // Local mutation helpers — avoid a full refetch (and full payload) after each row action.
+  const patchGame = (id: string, patch: Record<string, any>) => {
+    setGames((prev) => prev.map((g) => (g.id === id ? { ...g, ...patch } : g)));
+  };
+  const removeGame = (id: string) => {
+    setGames((prev) => prev.filter((g) => g.id !== id));
+  };
 
   // Get unique platforms for filter
   const uniquePlatforms = Array.from(new Set(games.map(game => game.platform_info?.name).filter(Boolean)));
