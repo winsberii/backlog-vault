@@ -1,26 +1,35 @@
-import { useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionManager } from "./useSessionManager";
 import { validateSessionSecurity } from "@/lib/sessionUtils";
 
-export const useAuth = () => {
+interface AuthContextValue {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signOut: () => Promise<void>;
+  validateSession: () => Promise<boolean>;
+  updateActivity: () => void;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize session manager with security settings
+  // Initialize session manager exactly once for the whole app.
   const { validateSession, updateActivity, cleanExpiredSession } = useSessionManager({
-    checkInterval: 5, // Check every 5 minutes
-    inactivityTimeout: 60, // 1 hour timeout
-    warningBeforeExpiry: 5, // Warn 5 minutes before expiry
+    checkInterval: 5,
+    inactivityTimeout: 60,
+    warningBeforeExpiry: 5,
   });
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // Validate session security before setting state
         if (session && !validateSessionSecurity(session)) {
           console.warn('Invalid session detected, cleaning up');
           cleanExpiredSession();
@@ -31,14 +40,12 @@ export const useAuth = () => {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Update activity when session changes
         if (session) {
           updateActivity();
         }
       }
     );
 
-    // THEN check for existing session with security validation
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && !validateSessionSecurity(session)) {
         console.warn('Invalid existing session detected, cleaning up');
@@ -59,14 +66,14 @@ export const useAuth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [validateSessionSecurity, cleanExpiredSession, updateActivity]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Error signing out:", error);
-        // Force cleanup even if signOut fails
         await cleanExpiredSession();
       }
     } catch (error) {
@@ -75,12 +82,19 @@ export const useAuth = () => {
     }
   };
 
-  return {
-    user,
-    session,
-    loading,
-    signOut,
-    validateSession,
-    updateActivity,
-  };
+  return (
+    <AuthContext.Provider
+      value={{ user, session, loading, signOut, validateSession, updateActivity }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = (): AuthContextValue => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return ctx;
 };
