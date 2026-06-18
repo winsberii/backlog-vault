@@ -10,7 +10,8 @@ import { Plus, FileSpreadsheet, Gamepad, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PlatformManager } from "@/components/PlatformManager";
-export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort' | 'skipped' | 'api-keys' | 'platforms';
+import { Statistics } from "@/components/Statistics";
+export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort' | 'skipped' | 'api-keys' | 'platforms' | 'statistics';
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('backlog');
   const [showGameForm, setShowGameForm] = useState(false);

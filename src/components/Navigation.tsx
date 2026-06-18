@@ -42,6 +42,11 @@ export const Navigation = ({ currentView, onViewChange }: NavigationProps) => {
       label: 'To Sort',
       icon: Filter,
     },
+    {
+      key: 'statistics' as ViewMode,
+      label: 'Statistics',
+      icon: BarChart3,
+    },
   ];
 
   const handleNavItemClick = (item: ViewMode) => {
