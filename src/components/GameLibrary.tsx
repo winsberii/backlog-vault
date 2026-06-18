@@ -474,7 +474,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
         description: `${game.title} has been deleted from your library.`,
       });
 
-      await onRefresh();
+      onRemove(game.id);
     } catch (error: any) {
       console.error("Error deleting game:", error);
       toast({
