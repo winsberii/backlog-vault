@@ -445,9 +445,11 @@ interface GameListItemProps {
   viewMode: ViewMode;
   onEdit: () => void;
   onRefresh: () => Promise<void>;
+  onPatch: (id: string, patch: Record<string, any>) => void;
+  onRemove: (id: string) => void;
 }
 
-const GameListItem = ({ game, viewMode, onEdit, onRefresh }: GameListItemProps) => {
+const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: GameListItemProps) => {
   const { toast } = useToast();
   const { formatPrice } = useCurrency();
   const isMobile = useIsMobile();
