@@ -532,7 +532,15 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
         description: `${game.title} has been marked as completed.`,
       });
 
-      await onRefresh();
+      if (viewMode === 'backlog') {
+        onRemove(game.id);
+      } else {
+        onPatch(game.id, {
+          is_completed: true,
+          is_currently_playing: false,
+          completion_date: new Date().toISOString().split('T')[0],
+        });
+      }
     } catch (error: any) {
       console.error("Error marking game as completed:", error);
       toast({
