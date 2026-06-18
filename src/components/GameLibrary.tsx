@@ -645,7 +645,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
         description: `${game.title} has been ${game.needs_purchase ? 'removed from' : 'added to'} the wishlist.`,
       });
 
-      await onRefresh();
+      const newNeeds = !game.needs_purchase;
+      if (viewMode === 'wishlist' && !newNeeds) {
+        onRemove(game.id);
+      } else {
+        onPatch(game.id, { needs_purchase: newNeeds });
+      }
     } catch (error: any) {
       console.error("Error toggling needs purchase status:", error);
       toast({
