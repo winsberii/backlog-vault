@@ -68,6 +68,64 @@ async function downloadAndSaveImage(imageUrl: string, userId: string, gameTitle:
   }
 }
 
+/**
+ * Webhook response contract (HLTB_WEBHOOK_URL).
+ *
+ * Request (POST application/json):
+ *   {
+ *     "url":       string,   // HowLongToBeat page URL
+ *     "title":     string,   // Game title (may be empty)
+ *     "userId":    string    // Authenticated user id (for image storage scoping)
+ *   }
+ *
+ * Required JSON response shape (HTTP 200):
+ *   {
+ *     "coverImage":        string | null,  // Absolute image URL OR null. Required field, may be null.
+ *     "estimatedDuration": number | null   // Hours (main story), integer or float. Required field, may be null.
+ *   }
+ *
+ * Optional fields (ignored if missing, used when present):
+ *   "mainStory":       number   // hours
+ *   "mainPlusExtras":  number   // hours
+ *   "completionist":   number   // hours
+ *   "title":           string   // canonical title
+ *
+ * Any non-2xx response, missing required fields, or invalid JSON triggers the
+ * built-in HTML scraping fallback.
+ */
+async function fetchFromWebhook(
+  webhookUrl: string,
+  payload: { url: string; title: string; userId: string }
+): Promise<{ coverImage: string | null; estimatedDuration: number } | null> {
+  try {
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    if (!res.ok) {
+      console.warn('Webhook returned non-OK status:', res.status)
+      return null
+    }
+    const json = await res.json()
+    if (!('coverImage' in json) || !('estimatedDuration' in json)) {
+      console.warn('Webhook response missing required fields:', Object.keys(json))
+      return null
+    }
+    const coverImage = typeof json.coverImage === 'string' && json.coverImage.trim()
+      ? json.coverImage.trim()
+      : null
+    const rawDuration = json.estimatedDuration ?? json.mainStory
+    const estimatedDuration = typeof rawDuration === 'number' && rawDuration > 0
+      ? rawDuration
+      : 0
+    return { coverImage, estimatedDuration }
+  } catch (err) {
+    console.warn('Webhook call failed:', err)
+    return null
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -86,7 +144,40 @@ serve(async (req) => {
 
     console.log('Fetching data from:', url)
 
-    // Fetch the webpage
+    // 1) Try external webhook first (if configured)
+    const webhookUrl = Deno.env.get('HLTB_WEBHOOK_URL')
+    if (webhookUrl) {
+      console.log('Trying HLTB_WEBHOOK_URL')
+      const webhookResult = await fetchFromWebhook(webhookUrl, {
+        url,
+        title: gameTitle || '',
+        userId,
+      })
+      if (webhookResult && (webhookResult.coverImage || webhookResult.estimatedDuration > 0)) {
+        let savedCoverImage: string | null = null
+        if (webhookResult.coverImage) {
+          savedCoverImage = await downloadAndSaveImage(
+            webhookResult.coverImage,
+            userId,
+            gameTitle || 'game'
+          )
+        }
+        return new Response(
+          JSON.stringify({
+            success: true,
+            source: 'webhook',
+            data: {
+              coverImage: savedCoverImage || webhookResult.coverImage,
+              estimatedDuration: Math.round(webhookResult.estimatedDuration),
+            },
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+        )
+      }
+      console.log('Webhook returned no usable data; falling back to scrape')
+    }
+
+    // 2) Fallback: scrape HowLongToBeat directly
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -96,6 +187,7 @@ serve(async (req) => {
     if (!response.ok) {
       throw new Error(`Failed to fetch page: ${response.status}`)
     }
+
 
     const html = await response.text()
     
