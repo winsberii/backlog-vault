@@ -56,8 +56,8 @@ async function downloadAndSaveImage(imageUrl: string, userId: string, gameTitle:
       .from('cover-images')
       .getPublicUrl(filePath)
 
-    // Fix URL by replacing kong:8000 with proper Supabase URL
-    const fixedUrl = publicUrl.replace(/kong:8000/g, supabaseUrl.replace('https://', '').replace('http://', ''))
+    // Fix URL by replacing internal gateway with the dynamic external domain
+    const fixedUrl = publicUrl.replace(/https?:\/\/kong:8000/i, supabaseUrl.replace(/\/$/, ''))
     
     console.log('Image saved to storage:', fixedUrl)
     return fixedUrl
