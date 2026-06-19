@@ -275,11 +275,13 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
+        source: 'scrape',
         data: {
-          coverImage: savedCoverImage || coverImageUrl, // Return saved image URL or fallback to original
+          coverImage: savedCoverImage || coverImageUrl,
           estimatedDuration: Math.round(mainStoryHours)
         }
       }),
+
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
