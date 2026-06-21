@@ -12,31 +12,55 @@ interface YearStats {
   skipped: number;
 }
 
+interface PlatformInfo {
+  id: string;
+  name: string;
+  display_order: number;
+}
+
+interface PlatformStats {
+  name: string;
+  displayOrder: number;
+  count: number;
+  estimatedDuration: number;
+}
+
 export const Statistics = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [rows, setRows] = useState<any[]>([]);
+  const [platforms, setPlatforms] = useState<PlatformInfo[]>([]);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from("games")
-        .select("is_completed, skipped, completion_date, actual_playtime, estimated_duration, created_at")
-        .eq("user_id", user.id);
-      if (!error) setRows(data || []);
+      const [gamesRes, platformsRes] = await Promise.all([
+        supabase
+          .from("games")
+          .select("is_completed, skipped, completion_date, actual_playtime, estimated_duration, created_at, platform, tosort")
+          .eq("user_id", user.id),
+        supabase
+          .from("platforms")
+          .select("id, name, display_order")
+          .order("display_order", { ascending: true })
+      ]);
+      if (!gamesRes.error) setRows(gamesRes.data || []);
+      if (!platformsRes.error) setPlatforms(platformsRes.data || []);
       setIsLoading(false);
     })();
   }, [user]);
 
-  const { byYear, totals } = useMemo(() => {
+  const { byYear, totals, byPlatform } = useMemo(() => {
     const map = new Map<string, YearStats>();
     const ensure = (y: string) => {
       if (!map.has(y)) map.set(y, { year: y, completed: 0, duration: 0, skipped: 0 });
       return map.get(y)!;
     };
     let tC = 0, tD = 0, tS = 0;
+
+    const platformMap = new Map<string, PlatformStats>();
+
     for (const g of rows) {
       if (g.is_completed) {
         const date = g.completion_date || g.created_at;
@@ -53,10 +77,31 @@ export const Statistics = () => {
         ensure(y).skipped += 1;
         tS += 1;
       }
+      // Backlog: not completed, not to-sort, not skipped
+      if (!g.is_completed && !g.tosort && !g.skipped) {
+        const platform = platforms.find((p) => p.id === g.platform);
+        const name = platform?.name || "Unknown";
+        const displayOrder = platform?.display_order ?? Number.MAX_SAFE_INTEGER;
+        const existing = platformMap.get(name);
+        if (existing) {
+          existing.count += 1;
+          existing.estimatedDuration += Number(g.estimated_duration) || 0;
+        } else {
+          platformMap.set(name, {
+            name,
+            displayOrder,
+            count: 1,
+            estimatedDuration: Number(g.estimated_duration) || 0,
+          });
+        }
+      }
     }
     const byYear = Array.from(map.values()).sort((a, b) => b.year.localeCompare(a.year));
-    return { byYear, totals: { completed: tC, duration: tD, skipped: tS } };
-  }, [rows]);
+    const byPlatform = Array.from(platformMap.values()).sort(
+      (a, b) => a.displayOrder - b.displayOrder
+    );
+    return { byYear, totals: { completed: tC, duration: tD, skipped: tS }, byPlatform };
+  }, [rows, platforms]);
 
   if (isLoading) {
     return <div className="text-center py-8 text-muted-foreground">Loading statistics...</div>;
@@ -118,6 +163,36 @@ export const Statistics = () => {
                     <TableCell className="text-right">{y.completed}</TableCell>
                     <TableCell className="text-right">{y.duration}h</TableCell>
                     <TableCell className="text-right">{y.skipped}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Backlog by Platform</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {byPlatform.length === 0 ? (
+            <div className="text-muted-foreground text-sm">No backlog data by platform.</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Platform</TableHead>
+                  <TableHead className="text-right">Games</TableHead>
+                  <TableHead className="text-right">Est. Time</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {byPlatform.map((p) => (
+                  <TableRow key={p.name}>
+                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell className="text-right">{p.count}</TableCell>
+                    <TableCell className="text-right">{p.estimatedDuration}h</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
