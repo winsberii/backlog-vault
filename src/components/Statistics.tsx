@@ -98,7 +98,7 @@ export const Statistics = () => {
     }
     const byYear = Array.from(map.values()).sort((a, b) => b.year.localeCompare(a.year));
     const byPlatform = Array.from(platformMap.values()).sort(
-      (a, b) => a.displayOrder - b.displayOrder
+      (a, b) => b.estimatedDuration - a.estimatedDuration || b.count - a.count
     );
     return { byYear, totals: { completed: tC, duration: tD, skipped: tS }, byPlatform };
   }, [rows, platforms]);
