@@ -107,20 +107,48 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
     }
 
     try {
-      let query = supabase
-        .from('games')
-        .select(LIST_COLUMNS)
-        .eq('user_id', user.id);
+      if (viewMode === 'completed') {
+        // Completed view shows one row per playthrough (a game can appear multiple times).
+        const { data, error } = await supabase
+          .from('playthroughs')
+          .select(`
+            id, completion_date, playtime, platform, notes, game_id,
+            playthrough_platform_info:platform(name),
+            games!inner(${LIST_COLUMNS})
+          `)
+          .eq('user_id', user.id)
+          .order('completion_date', { ascending: false, nullsFirst: false });
 
-      query = applyViewFilter(query);
+        if (error) throw error;
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+        const rows = (data || []).map((p: any) => ({
+          ...(p.games as any),
+          id: p.id, // row identity for React key + local mutations
+          game_id: (p.games as any).id,
+          playthrough_id: p.id,
+          completion_date: p.completion_date ?? (p.games as any).completion_date,
+          actual_playtime: p.playtime ?? (p.games as any).actual_playtime,
+          playthrough_platform: p.platform ?? (p.games as any).playthrough_platform,
+          playthrough_platform_info: p.playthrough_platform_info ?? (p.games as any).playthrough_platform_info,
+          playthrough_notes: p.notes,
+        }));
 
-      if (error) {
-        throw error;
+        setGames(rows);
+      } else {
+        let query = supabase
+          .from('games')
+          .select(LIST_COLUMNS)
+          .eq('user_id', user.id);
+
+        query = applyViewFilter(query);
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // game_id mirrors id so row-level mutations work uniformly with the completed view.
+        setGames((data || []).map((g: any) => ({ ...g, game_id: g.id })));
       }
-
-      setGames(data || []);
     } catch (error) {
       console.error('Error fetching games:', error);
       setGames([]);
