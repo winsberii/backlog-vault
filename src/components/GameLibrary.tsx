@@ -823,6 +823,14 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                   Mark Done
                 </DropdownMenuItem>
               )}
+
+              {viewMode === 'completed' && (
+                <DropdownMenuItem onClick={handleMoveToPlaying}>
+                  <Play className="h-4 w-4 mr-2" />
+                  Play again
+                </DropdownMenuItem>
+              )}
+
               
               <DropdownMenuItem onClick={handleToggleToSort}>
                 {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
