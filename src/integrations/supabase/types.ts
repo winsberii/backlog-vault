@@ -188,6 +188,57 @@ export type Database = {
         }
         Relationships: []
       }
+      playthroughs: {
+        Row: {
+          completion_date: string | null
+          created_at: string
+          game_id: string
+          id: string
+          notes: string | null
+          platform: string | null
+          playtime: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completion_date?: string | null
+          created_at?: string
+          game_id: string
+          id?: string
+          notes?: string | null
+          platform?: string | null
+          playtime?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completion_date?: string | null
+          created_at?: string
+          game_id?: string
+          id?: string
+          notes?: string | null
+          platform?: string | null
+          playtime?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playthroughs_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "playthroughs_platform_fkey"
+            columns: ["platform"]
+            isOneToOne: false
+            referencedRelation: "platforms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           created_at: string
