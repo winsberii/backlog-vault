@@ -107,20 +107,48 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
     }
 
     try {
-      let query = supabase
-        .from('games')
-        .select(LIST_COLUMNS)
-        .eq('user_id', user.id);
+      if (viewMode === 'completed') {
+        // Completed view shows one row per playthrough (a game can appear multiple times).
+        const { data, error } = await supabase
+          .from('playthroughs')
+          .select(`
+            id, completion_date, playtime, platform, notes, game_id,
+            playthrough_platform_info:platform(name),
+            games!inner(${LIST_COLUMNS})
+          `)
+          .eq('user_id', user.id)
+          .order('completion_date', { ascending: false, nullsFirst: false });
 
-      query = applyViewFilter(query);
+        if (error) throw error;
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+        const rows = (data || []).map((p: any) => ({
+          ...(p.games as any),
+          id: p.id, // row identity for React key + local mutations
+          game_id: (p.games as any).id,
+          playthrough_id: p.id,
+          completion_date: p.completion_date ?? (p.games as any).completion_date,
+          actual_playtime: p.playtime ?? (p.games as any).actual_playtime,
+          playthrough_platform: p.platform ?? (p.games as any).playthrough_platform,
+          playthrough_platform_info: p.playthrough_platform_info ?? (p.games as any).playthrough_platform_info,
+          playthrough_notes: p.notes,
+        }));
 
-      if (error) {
-        throw error;
+        setGames(rows);
+      } else {
+        let query = supabase
+          .from('games')
+          .select(LIST_COLUMNS)
+          .eq('user_id', user.id);
+
+        query = applyViewFilter(query);
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // game_id mirrors id so row-level mutations work uniformly with the completed view.
+        setGames((data || []).map((g: any) => ({ ...g, game_id: g.id })));
       }
-
-      setGames(data || []);
     } catch (error) {
       console.error('Error fetching games:', error);
       setGames([]);
@@ -160,7 +188,8 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
           passesViewMode = game.needs_purchase && !game.tosort && !game.skipped;
           break;
         case 'completed':
-          passesViewMode = game.is_completed && !game.tosort && !game.skipped;
+          // Rows come from playthroughs; keep every one (game.is_completed may be false after "Play again").
+          passesViewMode = true;
           break;
         case 'tosort':
           passesViewMode = game.tosort && !game.skipped;
@@ -453,33 +482,45 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
   const { toast } = useToast();
   const { formatPrice } = useCurrency();
   const isMobile = useIsMobile();
-  
+  const { user } = useAuth();
+
+  // In the completed view each row is a playthrough: `game.id` is the playthrough id,
+  // and `game.game_id` points at the underlying game record.
+  const gameId = game.game_id ?? game.id;
+
   const handleClone = () => {
-    console.log("Clone game:", game.id);
+    console.log("Clone game:", gameId);
   };
 
   const handleDelete = async () => {
     try {
-      const { error } = await supabase
-        .from('games')
-        .delete()
-        .eq('id', game.id);
-
-      if (error) {
-        throw error;
+      if (viewMode === 'completed' && game.playthrough_id) {
+        const { error } = await supabase
+          .from('playthroughs')
+          .delete()
+          .eq('id', game.playthrough_id);
+        if (error) throw error;
+        toast({
+          title: "Playthrough deleted",
+          description: `A playthrough of ${game.title} was removed.`,
+        });
+      } else {
+        const { error } = await supabase
+          .from('games')
+          .delete()
+          .eq('id', gameId);
+        if (error) throw error;
+        toast({
+          title: "Game deleted",
+          description: `${game.title} has been deleted from your library.`,
+        });
       }
-
-      toast({
-        title: "Game deleted",
-        description: `${game.title} has been deleted from your library.`,
-      });
-
       onRemove(game.id);
     } catch (error: any) {
       console.error("Error deleting game:", error);
       toast({
         title: "Error",
-        description: "Failed to delete game. Please try again.",
+        description: "Failed to delete. Please try again.",
         variant: "destructive",
       });
     }
@@ -490,11 +531,9 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
       const { error } = await supabase
         .from('games')
         .update({ is_currently_playing: !game.is_currently_playing })
-        .eq('id', game.id);
+        .eq('id', gameId);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: game.is_currently_playing ? "Stopped playing" : "Now playing",
@@ -512,19 +551,59 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
     }
   };
 
-  const handleMarkCompleted = async () => {
+  // Move a completed game back into rotation without losing its playthrough history.
+  const handleMoveToPlaying = async () => {
     try {
       const { error } = await supabase
         .from('games')
-        .update({ 
-          is_completed: true,
-          is_currently_playing: false, // Can't be playing if completed
-          completion_date: new Date().toISOString().split('T')[0] // Today's date
+        .update({
+          is_completed: false,
+          is_currently_playing: true,
         })
-        .eq('id', game.id);
+        .eq('id', gameId);
 
-      if (error) {
-        throw error;
+      if (error) throw error;
+
+      toast({
+        title: "Back in the backlog",
+        description: `${game.title} is now marked as currently playing.`,
+      });
+
+      onPatch(game.id, { is_completed: false, is_currently_playing: true });
+    } catch (error: any) {
+      console.error("Error moving game to playing:", error);
+      toast({
+        title: "Error",
+        description: "Failed to move game. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMarkCompleted = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { error } = await supabase
+        .from('games')
+        .update({
+          is_completed: true,
+          is_currently_playing: false,
+          completion_date: today,
+        })
+        .eq('id', gameId);
+
+      if (error) throw error;
+
+      // Record a new playthrough so the game can appear multiple times in the Completed list.
+      if (user) {
+        const { error: pErr } = await supabase.from('playthroughs').insert({
+          user_id: user.id,
+          game_id: gameId,
+          completion_date: today,
+          playtime: game.actual_playtime ?? null,
+          platform: game.playthrough_platform ?? null,
+        });
+        if (pErr) console.error("Error recording playthrough:", pErr);
       }
 
       toast({
@@ -538,7 +617,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
         onPatch(game.id, {
           is_completed: true,
           is_currently_playing: false,
-          completion_date: new Date().toISOString().split('T')[0],
+          completion_date: today,
         });
       }
     } catch (error: any) {
@@ -555,17 +634,15 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
     try {
       const { error } = await supabase
         .from('games')
-        .update({ 
-          skipped: new Date().toISOString().split('T')[0], // Today's date
+        .update({
+          skipped: new Date().toISOString().split('T')[0],
           is_currently_playing: false,
           needs_purchase: false,
-          tosort: false
+          tosort: false,
         })
-        .eq('id', game.id);
+        .eq('id', gameId);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Game skipped",
@@ -596,14 +673,10 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
     try {
       const { error } = await supabase
         .from('games')
-        .update({ 
-          tosort: !game.tosort
-        })
-        .eq('id', game.id);
+        .update({ tosort: !game.tosort })
+        .eq('id', gameId);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: game.tosort ? "Removed from To Sort" : "Added to To Sort",
@@ -611,7 +684,6 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
       });
 
       const newTosort = !game.tosort;
-      // Row leaves the current view whenever the new tosort value disagrees with the tab.
       if (viewMode === 'tosort' ? !newTosort : newTosort) {
         onRemove(game.id);
       } else {
@@ -631,14 +703,10 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
     try {
       const { error } = await supabase
         .from('games')
-        .update({ 
-          needs_purchase: !game.needs_purchase
-        })
-        .eq('id', game.id);
+        .update({ needs_purchase: !game.needs_purchase })
+        .eq('id', gameId);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: game.needs_purchase ? "Removed from Wishlist" : "Added to Wishlist",
@@ -755,6 +823,14 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                   Mark Done
                 </DropdownMenuItem>
               )}
+
+              {viewMode === 'completed' && (
+                <DropdownMenuItem onClick={handleMoveToPlaying}>
+                  <Play className="h-4 w-4 mr-2" />
+                  Play again
+                </DropdownMenuItem>
+              )}
+
               
               <DropdownMenuItem onClick={handleToggleToSort}>
                 {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
@@ -1041,6 +1117,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-popover">
+            {viewMode === 'completed' && (
+              <DropdownMenuItem onClick={handleMoveToPlaying}>
+                <Play className="h-3 w-3 mr-2" />
+                Play again
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={handleToggleToSort}>
               {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
             </DropdownMenuItem>
