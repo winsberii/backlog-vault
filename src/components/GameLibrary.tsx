@@ -188,7 +188,8 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
           passesViewMode = game.needs_purchase && !game.tosort && !game.skipped;
           break;
         case 'completed':
-          passesViewMode = game.is_completed && !game.tosort && !game.skipped;
+          // Rows come from playthroughs; keep every one (game.is_completed may be false after "Play again").
+          passesViewMode = true;
           break;
         case 'tosort':
           passesViewMode = game.tosort && !game.skipped;
