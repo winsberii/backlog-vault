@@ -1117,6 +1117,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-popover">
+            {viewMode === 'completed' && (
+              <DropdownMenuItem onClick={handleMoveToPlaying}>
+                <Play className="h-3 w-3 mr-2" />
+                Play again
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={handleToggleToSort}>
               {game.tosort ? "Remove from To Sort" : "Add to To Sort"}
             </DropdownMenuItem>
