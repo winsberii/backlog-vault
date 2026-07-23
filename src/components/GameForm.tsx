@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GamePlaythroughs } from "@/components/GamePlaythroughs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3, Columns, Store } from "lucide-react";
@@ -676,19 +677,21 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-4'}`}>
+            <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 gap-1' : (game?.id ? 'grid-cols-5' : 'grid-cols-4')}`}>
               <TabsTrigger value="basic" className={isMobile ? "text-xs px-2" : ""}>
                 {isMobile ? "Basic" : "Basic Info"}
               </TabsTrigger>
               <TabsTrigger value="status" className={isMobile ? "text-xs px-2" : ""}>Status</TabsTrigger>
               {!isMobile && <TabsTrigger value="details">Details</TabsTrigger>}
               {!isMobile && <TabsTrigger value="integration">Integration</TabsTrigger>}
+              {!isMobile && game?.id && <TabsTrigger value="playthroughs">Playthroughs</TabsTrigger>}
             </TabsList>
             
             {isMobile && (
-              <TabsList className="grid w-full grid-cols-2 gap-1 mt-2">
+              <TabsList className={`grid w-full ${game?.id ? 'grid-cols-3' : 'grid-cols-2'} gap-1 mt-2`}>
                 <TabsTrigger value="details" className="text-xs px-2">Details</TabsTrigger>
                 <TabsTrigger value="integration" className="text-xs px-2">Integration</TabsTrigger>
+                {game?.id && <TabsTrigger value="playthroughs" className="text-xs px-2">Plays</TabsTrigger>}
               </TabsList>
             )}
 
@@ -1213,6 +1216,12 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {game?.id && (
+              <TabsContent value="playthroughs" className="space-y-4">
+                <GamePlaythroughs gameId={game.id} />
+              </TabsContent>
+            )}
           </Tabs>
 
           <DialogFooter className="gap-2">
