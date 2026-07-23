@@ -1216,6 +1216,12 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {game?.id && (
+              <TabsContent value="playthroughs" className="space-y-4">
+                <GamePlaythroughs gameId={game.id} />
+              </TabsContent>
+            )}
           </Tabs>
 
           <DialogFooter className="gap-2">
