@@ -443,7 +443,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
             key={game.id}
             game={game}
             viewMode={viewMode}
-            onEdit={() => onEditGame(game)}
+            onEdit={() => onEditGame(viewMode === 'completed' ? { ...game, id: game.game_id } : game)}
             onRefresh={fetchGames}
             onPatch={patchGame}
             onRemove={removeGame}
