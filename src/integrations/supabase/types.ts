@@ -71,6 +71,7 @@ export type Database = {
           platform: string | null
           playthrough_platform: string | null
           price: number | null
+          release_date: string | null
           retro_achievement_url: string | null
           skipped: string | null
           title: string
@@ -95,6 +96,7 @@ export type Database = {
           platform?: string | null
           playthrough_platform?: string | null
           price?: number | null
+          release_date?: string | null
           retro_achievement_url?: string | null
           skipped?: string | null
           title: string
@@ -119,6 +121,7 @@ export type Database = {
           platform?: string | null
           playthrough_platform?: string | null
           price?: number | null
+          release_date?: string | null
           retro_achievement_url?: string | null
           skipped?: string | null
           title?: string
@@ -279,6 +282,30 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          id: string
+          release_webhook_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          release_webhook_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          release_webhook_url?: string | null
           updated_at?: string
           user_id?: string
         }
