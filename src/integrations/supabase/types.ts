@@ -72,6 +72,7 @@ export type Database = {
           playthrough_platform: string | null
           price: number | null
           release_date: string | null
+          release_notified_at: string | null
           retro_achievement_url: string | null
           skipped: string | null
           title: string
@@ -97,6 +98,7 @@ export type Database = {
           playthrough_platform?: string | null
           price?: number | null
           release_date?: string | null
+          release_notified_at?: string | null
           retro_achievement_url?: string | null
           skipped?: string | null
           title: string
@@ -122,6 +124,7 @@ export type Database = {
           playthrough_platform?: string | null
           price?: number | null
           release_date?: string | null
+          release_notified_at?: string | null
           retro_achievement_url?: string | null
           skipped?: string | null
           title?: string

@@ -4,6 +4,7 @@ import { GameLibrary } from "@/components/GameLibrary";
 import { GameForm } from "@/components/GameForm";
 import { ImportExport } from "@/components/ImportExport";
 import { ApiKeyManager } from "@/components/ApiKeyManager";
+import { ReleaseWebhookSettings } from "@/components/ReleaseWebhookSettings";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Plus, FileSpreadsheet, Gamepad, Clock } from "lucide-react";
@@ -130,7 +131,10 @@ const Index = () => {
 
         {/* Game Library, API Key Manager, Platform Manager, or Statistics */}
         {currentView === 'api-keys' ? (
-          <ApiKeyManager />
+          <div className="space-y-6">
+            <ReleaseWebhookSettings />
+            <ApiKeyManager />
+          </div>
         ) : currentView === 'platforms' ? (
           <PlatformManager />
         ) : currentView === 'statistics' ? (
