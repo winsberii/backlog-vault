@@ -61,6 +61,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     estimatedDuration: game?.estimated_duration || "",
     actualPlaytime: game?.actual_playtime || "",
     completionDate: game?.completion_date || "",
+    releaseDate: game?.release_date || "",
     skippedDate: game?.skipped || "",
     price: game?.price || "",
     comment: game?.comment || "",
@@ -268,6 +269,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
         estimated_duration: formData.estimatedDuration ? parseInt(formData.estimatedDuration) : null,
         actual_playtime: formData.actualPlaytime ? parseInt(formData.actualPlaytime) : null,
         completion_date: formData.completionDate || null,
+        release_date: formData.releaseDate || null,
         skipped: formData.isSkipped ? (formData.skippedDate || new Date().toISOString().split('T')[0]) : null,
         price: formData.price ? parseFloat(formData.price) : null,
         comment: formData.comment || null,
@@ -961,6 +963,22 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                         placeholder="0"
                         className="bg-background border-border"
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="releaseDate">Release Date</Label>
+                      <Input
+                        id="releaseDate"
+                        type="date"
+                        value={formData.releaseDate}
+                        onChange={(e) => handleInputChange("releaseDate", e.target.value)}
+                        className="bg-background border-border"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Used only for release notifications — it does not affect list sorting.
+                      </p>
                     </div>
                   </div>
 
