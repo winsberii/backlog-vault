@@ -986,6 +986,13 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                 </>
               )}
               
+              {viewMode === 'tosort' && game.release_date && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-2.5 w-2.5" />
+                  {new Date(game.release_date).toLocaleDateString()}
+                </span>
+              )}
+              
               {viewMode !== 'backlog' && game.comment && (
                 <span className="truncate max-w-56 prose prose-sm dark:prose-invert max-w-none [&>*]:my-0 [&>*]:inline">
                   <ReactMarkdown remarkPlugins={[remarkBreaks]}>{game.comment}</ReactMarkdown>
