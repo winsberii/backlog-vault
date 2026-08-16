@@ -263,8 +263,18 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       }
       
       if (viewMode === 'tosort') {
-        // Sort by date added (created_at) - most recent first
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        // Sort: games without a release date first, then by release date ascending.
+        const hasDateA = !!a.release_date;
+        const hasDateB = !!b.release_date;
+        if (hasDateA !== hasDateB) {
+          return hasDateA ? 1 : -1;
+        }
+        if (a.release_date && b.release_date) {
+          const dateA = new Date(a.release_date).getTime();
+          const dateB = new Date(b.release_date).getTime();
+          if (dateA !== dateB) return dateA - dateB;
+        }
+        return a.title.localeCompare(b.title);
       }
       
       // Default fallback sorting (by creation date)
@@ -787,6 +797,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                   {formatPrice(game.price)}
                 </span>
               )}
+              {viewMode === 'tosort' && game.release_date && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {new Date(game.release_date).toLocaleDateString()}
+                </span>
+              )}
             </div>
           </div>
           
@@ -968,6 +984,13 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                     </span>
                   )}
                 </>
+              )}
+              
+              {viewMode === 'tosort' && game.release_date && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-2.5 w-2.5" />
+                  {new Date(game.release_date).toLocaleDateString()}
+                </span>
               )}
               
               {viewMode !== 'backlog' && game.comment && (
