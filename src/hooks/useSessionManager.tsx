@@ -76,9 +76,23 @@ export const useSessionManager = (options: SessionManagerOptions = {}) => {
       const tokenExpiry = session.expires_at;
       
       if (tokenExpiry && now >= tokenExpiry) {
-        console.log('Token has expired');
-        await cleanExpiredSession();
-        return false;
+        // Try to refresh the session before signing the user out
+        console.log('Token expired, attempting refresh...');
+        try {
+          const { data, error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError || !data.session) {
+            console.log('Session refresh failed, cleaning up');
+            await cleanExpiredSession();
+            return false;
+          }
+          // Refresh succeeded — reset warning state and continue
+          warningShownRef.current = false;
+          return true;
+        } catch (refreshErr) {
+          console.error('Error refreshing session:', refreshErr);
+          await cleanExpiredSession();
+          return false;
+        }
       }
 
       // Check for expiry warning
