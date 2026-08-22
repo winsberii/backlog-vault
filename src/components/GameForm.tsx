@@ -46,6 +46,10 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [playerTemplates, setPlayerTemplates] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
   const [selectedStoreIds, setSelectedStoreIds] = useState<string[]>([]);
+  const [genres, setGenres] = useState<any[]>([]);
+  const [selectedGenreIds, setSelectedGenreIds] = useState<string[]>([]);
+  const [newGenreName, setNewGenreName] = useState("");
+  const [isAddingGenre, setIsAddingGenre] = useState(false);
   const [commentViewMode, setCommentViewMode] = useState<'edit' | 'preview' | 'split'>('edit');
   const autoFetchTriggeredRef = useRef<string>("");
   
@@ -101,12 +105,19 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
           .select('*')
           .order('name');
 
+        // Fetch genres
+        const { data: genresData } = await supabase
+          .from('genres')
+          .select('*')
+          .order('name');
+
         setPlatforms(allPlatforms || []);
         setActivePlatforms(activePlatformsData || []);
         setPlayerTemplates(templatesData || []);
         setStores(storesData || []);
+        setGenres(genresData || []);
 
-        // Fetch selected stores for existing game
+        // Fetch selected stores and genres for existing game
         if (game?.id) {
           const { data: gameStoresData } = await supabase
             .from('game_stores')
@@ -114,6 +125,15 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
             .eq('game_id', game.id);
           if (gameStoresData) {
             setSelectedStoreIds(gameStoresData.map((gs: any) => gs.store_id));
+          }
+
+          const { data: gameGenresData } = await supabase
+            .from('game_genres')
+            .select('genre_id')
+            .eq('game_id', game.id)
+            .order('created_at', { ascending: true });
+          if (gameGenresData) {
+            setSelectedGenreIds(gameGenresData.map((gg: any) => gg.genre_id));
           }
         }
       } catch (error) {
