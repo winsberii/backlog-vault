@@ -21,11 +21,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   // Initialize session manager exactly once for the whole app.
-  const { validateSession, updateActivity, cleanExpiredSession } = useSessionManager({
-    checkInterval: 5,
-    inactivityTimeout: 60,
-    warningBeforeExpiry: 5,
-  });
+  // Uses environment-appropriate config from sessionConfig.ts
+  // (default: 2-day inactivity timeout, 5-minute checks).
+  const { validateSession, updateActivity, cleanExpiredSession } = useSessionManager();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
