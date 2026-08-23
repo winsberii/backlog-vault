@@ -45,7 +45,8 @@ import {
   Users,
   Timer,
   ChevronDown,
-  ShoppingBag
+  ShoppingBag,
+  Tag
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -79,7 +80,8 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
     number_of_players, how_long_to_beat_url, retro_achievement_url, release_date,
     platform_info:platform(name),
     playthrough_platform_info:playthrough_platform(name),
-    game_stores(store_id, stores(name))
+    game_stores(store_id, stores(name)),
+    game_genres(genre_id, created_at, genres(name))
   `;
 
   const applyViewFilter = (query: any) => {
