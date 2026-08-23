@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GamePlaythroughs } from "@/components/GamePlaythroughs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3, Columns, Store } from "lucide-react";
+import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3, Columns, Store, Plus, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
@@ -1136,6 +1136,61 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                     </div>
                     {selectedStoreIds.length > 0 && (
                       <p className="text-xs text-muted-foreground">{selectedStoreIds.length} store{selectedStoreIds.length > 1 ? 's' : ''} selected</p>
+                    )}
+                  </div>
+
+                  {/* Genres */}
+                  <div className="space-y-2">
+                    <Label>Genres</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {genres.map((genre) => {
+                        const isSelected = selectedGenreIds.includes(genre.id);
+                        return (
+                          <Badge
+                            key={genre.id}
+                            variant={isSelected ? "default" : "outline"}
+                            className={`cursor-pointer transition-colors ${isSelected ? '' : 'hover:bg-secondary/80'}`}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedGenreIds(selectedGenreIds.filter(id => id !== genre.id));
+                              } else {
+                                setSelectedGenreIds([...selectedGenreIds, genre.id]);
+                              }
+                            }}
+                          >
+                            {isSelected && <X className="h-3 w-3 mr-1" />}
+                            {genre.name}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newGenreName}
+                        onChange={(e) => setNewGenreName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddGenre();
+                          }
+                        }}
+                        placeholder="New genre tag..."
+                        className="bg-background border-border h-8 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddGenre}
+                        disabled={!newGenreName.trim() || isAddingGenre}
+                        className="h-8 gap-1"
+                      >
+                        {isAddingGenre ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                        Add
+                      </Button>
+                    </div>
+                    {selectedGenreIds.length > 0 && (
+                      <p className="text-xs text-muted-foreground">{selectedGenreIds.length} genre{selectedGenreIds.length > 1 ? 's' : ''} selected</p>
                     )}
                   </div>
 
