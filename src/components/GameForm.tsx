@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GamePlaythroughs } from "@/components/GamePlaythroughs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3, Columns, Store } from "lucide-react";
+import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3, Columns, Store, Plus, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";
@@ -214,6 +214,62 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     }
   };
 
+  // Add a genre tag: reuse an existing genre (case-insensitive) or create a new one
+  const handleAddGenre = async () => {
+    const name = newGenreName.trim();
+    if (!name || isAddingGenre) return;
+
+    const existing = genres.find(g => g.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      if (!selectedGenreIds.includes(existing.id)) {
+        setSelectedGenreIds([...selectedGenreIds, existing.id]);
+      }
+      setNewGenreName("");
+      return;
+    }
+
+    setIsAddingGenre(true);
+    try {
+      const { data, error } = await supabase
+        .from('genres')
+        .insert({ name })
+        .select('id, name')
+        .single();
+
+      if (error) {
+        // Another session may have created it concurrently — reuse it
+        const { data: existingData } = await supabase
+          .from('genres')
+          .select('id, name')
+          .ilike('name', name)
+          .maybeSingle();
+        if (existingData) {
+          setGenres(prev => [...prev, existingData].sort((a, b) => a.name.localeCompare(b.name)));
+          setSelectedGenreIds(prev => [...prev, existingData.id]);
+          setNewGenreName("");
+          return;
+        }
+        throw error;
+      }
+
+      if (data) {
+        setGenres(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+        setSelectedGenreIds(prev => [...prev, data.id]);
+        setNewGenreName("");
+      }
+    } catch (error: any) {
+      console.error('Error adding genre:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add genre.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingGenre(false);
+    }
+  };
+
+
   const handleDateBlur = (field: string, value: string) => {
     if (!value.trim()) {
       setDateError("");
@@ -342,6 +398,24 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
             .from('game_stores')
             .insert(gameStoresData);
           if (storesError) console.error('Error saving game stores:', storesError);
+        }
+
+        // Save game genres (same replace-all approach)
+        await supabase
+          .from('game_genres')
+          .delete()
+          .eq('game_id', savedGameId);
+
+        if (selectedGenreIds.length > 0) {
+          const gameGenresData = selectedGenreIds.map(genreId => ({
+            game_id: savedGameId,
+            genre_id: genreId,
+            user_id: user.id,
+          }));
+          const { error: genresError } = await supabase
+            .from('game_genres')
+            .insert(gameGenresData);
+          if (genresError) console.error('Error saving game genres:', genresError);
         }
       }
 
@@ -1062,6 +1136,61 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                     </div>
                     {selectedStoreIds.length > 0 && (
                       <p className="text-xs text-muted-foreground">{selectedStoreIds.length} store{selectedStoreIds.length > 1 ? 's' : ''} selected</p>
+                    )}
+                  </div>
+
+                  {/* Genres */}
+                  <div className="space-y-2">
+                    <Label>Genres</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {genres.map((genre) => {
+                        const isSelected = selectedGenreIds.includes(genre.id);
+                        return (
+                          <Badge
+                            key={genre.id}
+                            variant={isSelected ? "default" : "outline"}
+                            className={`cursor-pointer transition-colors ${isSelected ? '' : 'hover:bg-secondary/80'}`}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedGenreIds(selectedGenreIds.filter(id => id !== genre.id));
+                              } else {
+                                setSelectedGenreIds([...selectedGenreIds, genre.id]);
+                              }
+                            }}
+                          >
+                            {isSelected && <X className="h-3 w-3 mr-1" />}
+                            {genre.name}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newGenreName}
+                        onChange={(e) => setNewGenreName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddGenre();
+                          }
+                        }}
+                        placeholder="New genre tag..."
+                        className="bg-background border-border h-8 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddGenre}
+                        disabled={!newGenreName.trim() || isAddingGenre}
+                        className="h-8 gap-1"
+                      >
+                        {isAddingGenre ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                        Add
+                      </Button>
+                    </div>
+                    {selectedGenreIds.length > 0 && (
+                      <p className="text-xs text-muted-foreground">{selectedGenreIds.length} genre{selectedGenreIds.length > 1 ? 's' : ''} selected</p>
                     )}
                   </div>
 

@@ -45,7 +45,8 @@ import {
   Users,
   Timer,
   ChevronDown,
-  ShoppingBag
+  ShoppingBag,
+  Tag
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -79,7 +80,8 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
     number_of_players, how_long_to_beat_url, retro_achievement_url, release_date,
     platform_info:platform(name),
     playthrough_platform_info:playthrough_platform(name),
-    game_stores(store_id, stores(name))
+    game_stores(store_id, stores(name)),
+    game_genres(genre_id, created_at, genres(name))
   `;
 
   const applyViewFilter = (query: any) => {
@@ -497,6 +499,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
   // In the completed view each row is a playthrough: `game.id` is the playthrough id,
   // and `game.game_id` points at the underlying game record.
   const gameId = game.game_id ?? game.id;
+
+  // First genre tag (by the order it was added), shown next to the time in the backlog list
+  const firstGenreName = game.game_genres
+    ?.slice()
+    .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    [0]?.genres?.name;
 
   const handleClone = () => {
     console.log("Clone game:", gameId);
@@ -943,6 +951,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                       <Clock className="h-2.5 w-2.5" />
                       {game.estimated_duration}h
                     </span>
+                  )}
+                  {firstGenreName && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5">
+                      <Tag className="h-2.5 w-2.5" />
+                      {firstGenreName}
+                    </Badge>
                   )}
                   {game.actual_playtime > 0 && (
                     <span>Played: {game.actual_playtime}h</span>
