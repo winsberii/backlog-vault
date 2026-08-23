@@ -214,6 +214,62 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     }
   };
 
+  // Add a genre tag: reuse an existing genre (case-insensitive) or create a new one
+  const handleAddGenre = async () => {
+    const name = newGenreName.trim();
+    if (!name || isAddingGenre) return;
+
+    const existing = genres.find(g => g.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      if (!selectedGenreIds.includes(existing.id)) {
+        setSelectedGenreIds([...selectedGenreIds, existing.id]);
+      }
+      setNewGenreName("");
+      return;
+    }
+
+    setIsAddingGenre(true);
+    try {
+      const { data, error } = await supabase
+        .from('genres')
+        .insert({ name })
+        .select('id, name')
+        .single();
+
+      if (error) {
+        // Another session may have created it concurrently — reuse it
+        const { data: existingData } = await supabase
+          .from('genres')
+          .select('id, name')
+          .ilike('name', name)
+          .maybeSingle();
+        if (existingData) {
+          setGenres(prev => [...prev, existingData].sort((a, b) => a.name.localeCompare(b.name)));
+          setSelectedGenreIds(prev => [...prev, existingData.id]);
+          setNewGenreName("");
+          return;
+        }
+        throw error;
+      }
+
+      if (data) {
+        setGenres(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+        setSelectedGenreIds(prev => [...prev, data.id]);
+        setNewGenreName("");
+      }
+    } catch (error: any) {
+      console.error('Error adding genre:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add genre.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingGenre(false);
+    }
+  };
+
+
   const handleDateBlur = (field: string, value: string) => {
     if (!value.trim()) {
       setDateError("");
