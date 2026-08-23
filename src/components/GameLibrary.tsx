@@ -952,6 +952,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                       {game.estimated_duration}h
                     </span>
                   )}
+                  {firstGenreName && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5">
+                      <Tag className="h-2.5 w-2.5" />
+                      {firstGenreName}
+                    </Badge>
+                  )}
                   {game.actual_playtime > 0 && (
                     <span>Played: {game.actual_playtime}h</span>
                   )}
