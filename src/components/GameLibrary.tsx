@@ -500,6 +500,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
   // and `game.game_id` points at the underlying game record.
   const gameId = game.game_id ?? game.id;
 
+  // First genre tag (by the order it was added), shown next to the time in the backlog list
+  const firstGenreName = game.game_genres
+    ?.slice()
+    .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    [0]?.genres?.name;
+
   const handleClone = () => {
     console.log("Clone game:", gameId);
   };
