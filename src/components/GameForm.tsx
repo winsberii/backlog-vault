@@ -343,6 +343,24 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
             .insert(gameStoresData);
           if (storesError) console.error('Error saving game stores:', storesError);
         }
+
+        // Save game genres (same replace-all approach)
+        await supabase
+          .from('game_genres')
+          .delete()
+          .eq('game_id', savedGameId);
+
+        if (selectedGenreIds.length > 0) {
+          const gameGenresData = selectedGenreIds.map(genreId => ({
+            game_id: savedGameId,
+            genre_id: genreId,
+            user_id: user.id,
+          }));
+          const { error: genresError } = await supabase
+            .from('game_genres')
+            .insert(gameGenresData);
+          if (genresError) console.error('Error saving game genres:', genresError);
+        }
       }
 
       toast({
