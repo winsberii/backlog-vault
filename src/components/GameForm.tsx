@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GamePlaythroughs } from "@/components/GamePlaythroughs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3, Columns, Store, Plus, Tag } from "lucide-react";
+import { X, Upload, Calendar, Loader2, Download, Search, ExternalLink, Eye, Edit3, Columns, Store, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { uploadCoverImage, deleteCoverImage } from "@/lib/imageUpload";
 import { supabase } from "@/integrations/supabase/client";

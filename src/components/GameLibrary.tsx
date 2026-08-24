@@ -46,7 +46,8 @@ import {
   Timer,
   ChevronDown,
   ShoppingBag,
-  Tag
+  Tag,
+  Drama
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -954,7 +955,7 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                   )}
                   {firstGenreName && (
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5">
-                      <Tag className="h-2.5 w-2.5" />
+                      <Drama className="h-2.5 w-2.5" />
                       {firstGenreName}
                     </Badge>
                   )}
