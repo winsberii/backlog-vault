@@ -457,6 +457,36 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
               </CollapsibleContent>
             </Collapsible>
           )}
+
+          {/* Genre Filter */}
+          {uniqueGenres.length > 0 && (
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center justify-between w-full py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors group">
+                <span>Genres</span>
+                <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1.5">
+                  {uniqueGenres.map((genre) => (
+                    <div key={genre} className="flex items-center space-x-1.5">
+                      <Checkbox
+                        id={`genre-${genre}`}
+                        checked={selectedGenres.includes(genre)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedGenres([...selectedGenres, genre]);
+                          } else {
+                            setSelectedGenres(selectedGenres.filter(g => g !== genre));
+                          }
+                        }}
+                      />
+                      <label htmlFor={`genre-${genre}`} className="text-xs cursor-pointer">{genre}</label>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
         </div>
       )}
 
