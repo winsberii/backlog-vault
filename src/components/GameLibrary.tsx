@@ -178,6 +178,10 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   const uniquePlatforms = Array.from(new Set(games.map(game => game.platform_info?.name).filter(Boolean)));
   const uniquePlaythroughPlatforms = Array.from(new Set(games.map(game => game.playthrough_platform_info?.name).filter(Boolean)));
   const uniqueNumberOfPlayers = Array.from(new Set(games.map(game => game.number_of_players).filter(Boolean)));
+  const uniqueGenres = Array.from(
+    new Set(games.flatMap((game: any) => (game.game_genres || []).map((gg: any) => gg.genres?.name)).filter(Boolean))
+  ).sort((a: string, b: string) => a.localeCompare(b));
+
 
   // Filter games based on view mode and filters
   const filteredGames = useMemo(() => {
