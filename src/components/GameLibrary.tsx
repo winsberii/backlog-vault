@@ -353,12 +353,13 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
         <div className="bg-card border border-border rounded-lg p-4 space-y-3 z-10 relative">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-sm">Filters</h3>
-            {(selectedPlatforms.length > 0 || selectedPlaythroughPlatforms.length > 0 || selectedNumberOfPlayers.length > 0) && (
+            {(selectedPlatforms.length > 0 || selectedPlaythroughPlatforms.length > 0 || selectedNumberOfPlayers.length > 0 || selectedGenres.length > 0) && (
               <button
                 onClick={() => {
                   setSelectedPlatforms([]);
                   setSelectedPlaythroughPlatforms([]);
                   setSelectedNumberOfPlayers([]);
+                  setSelectedGenres([]);
                 }}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
