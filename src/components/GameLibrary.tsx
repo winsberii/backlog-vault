@@ -72,6 +72,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedPlaythroughPlatforms, setSelectedPlaythroughPlatforms] = useState<string[]>([]);
   const [selectedNumberOfPlayers, setSelectedNumberOfPlayers] = useState<string[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
 
   // Only request the columns actually rendered by the list to reduce payload size.
   const LIST_COLUMNS = `
@@ -177,6 +178,10 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   const uniquePlatforms = Array.from(new Set(games.map(game => game.platform_info?.name).filter(Boolean)));
   const uniquePlaythroughPlatforms = Array.from(new Set(games.map(game => game.playthrough_platform_info?.name).filter(Boolean)));
   const uniqueNumberOfPlayers = Array.from(new Set(games.map(game => game.number_of_players).filter(Boolean)));
+  const uniqueGenres = Array.from(
+    new Set(games.flatMap((game: any) => (game.game_genres || []).map((gg: any) => gg.genres?.name)).filter(Boolean))
+  ).sort((a: string, b: string) => a.localeCompare(b));
+
 
   // Filter games based on view mode and filters
   const filteredGames = useMemo(() => {
@@ -219,7 +224,12 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       const passesNumberOfPlayers = selectedNumberOfPlayers.length === 0 || 
         selectedNumberOfPlayers.includes(game.number_of_players);
 
-      return passesViewMode && passesSearch && passesPlatform && passesPlaythroughPlatform && passesNumberOfPlayers;
+      // Genre filter
+      const gameGenreNames = (game.game_genres || []).map((gg: any) => gg.genres?.name).filter(Boolean);
+      const passesGenres = selectedGenres.length === 0 ||
+        selectedGenres.some((g) => gameGenreNames.includes(g));
+
+      return passesViewMode && passesSearch && passesPlatform && passesPlaythroughPlatform && passesNumberOfPlayers && passesGenres;
     }).sort((a, b) => {
       // View-specific sorting takes precedence over manual filter sorting
       if (viewMode === 'backlog') {
@@ -283,7 +293,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       // Default fallback sorting (by creation date)
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [games, viewMode, searchTerm, selectedPlatforms, selectedPlaythroughPlatforms, selectedNumberOfPlayers]);
+  }, [games, viewMode, searchTerm, selectedPlatforms, selectedPlaythroughPlatforms, selectedNumberOfPlayers, selectedGenres]);
 
   // Calculate statistics and notify parent
   useEffect(() => {
@@ -343,12 +353,13 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
         <div className="bg-card border border-border rounded-lg p-4 space-y-3 z-10 relative">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-sm">Filters</h3>
-            {(selectedPlatforms.length > 0 || selectedPlaythroughPlatforms.length > 0 || selectedNumberOfPlayers.length > 0) && (
+            {(selectedPlatforms.length > 0 || selectedPlaythroughPlatforms.length > 0 || selectedNumberOfPlayers.length > 0 || selectedGenres.length > 0) && (
               <button
                 onClick={() => {
                   setSelectedPlatforms([]);
                   setSelectedPlaythroughPlatforms([]);
                   setSelectedNumberOfPlayers([]);
+                  setSelectedGenres([]);
                 }}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
@@ -440,6 +451,36 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
                         }}
                       />
                       <label htmlFor={`players-${players}`} className="text-xs cursor-pointer">{players}</label>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
+          {/* Genre Filter */}
+          {uniqueGenres.length > 0 && (
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="flex items-center justify-between w-full py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors group">
+                <span>Genres</span>
+                <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1.5">
+                  {uniqueGenres.map((genre) => (
+                    <div key={genre} className="flex items-center space-x-1.5">
+                      <Checkbox
+                        id={`genre-${genre}`}
+                        checked={selectedGenres.includes(genre)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedGenres([...selectedGenres, genre]);
+                          } else {
+                            setSelectedGenres(selectedGenres.filter(g => g !== genre));
+                          }
+                        }}
+                      />
+                      <label htmlFor={`genre-${genre}`} className="text-xs cursor-pointer">{genre}</label>
                     </div>
                   ))}
                 </div>
