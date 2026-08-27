@@ -293,7 +293,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       // Default fallback sorting (by creation date)
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [games, viewMode, searchTerm, selectedPlatforms, selectedPlaythroughPlatforms, selectedNumberOfPlayers]);
+  }, [games, viewMode, searchTerm, selectedPlatforms, selectedPlaythroughPlatforms, selectedNumberOfPlayers, selectedGenres]);
 
   // Calculate statistics and notify parent
   useEffect(() => {
