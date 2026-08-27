@@ -72,6 +72,7 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedPlaythroughPlatforms, setSelectedPlaythroughPlatforms] = useState<string[]>([]);
   const [selectedNumberOfPlayers, setSelectedNumberOfPlayers] = useState<string[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
 
   // Only request the columns actually rendered by the list to reduce payload size.
   const LIST_COLUMNS = `
