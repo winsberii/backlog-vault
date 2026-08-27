@@ -224,7 +224,12 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
       const passesNumberOfPlayers = selectedNumberOfPlayers.length === 0 || 
         selectedNumberOfPlayers.includes(game.number_of_players);
 
-      return passesViewMode && passesSearch && passesPlatform && passesPlaythroughPlatform && passesNumberOfPlayers;
+      // Genre filter
+      const gameGenreNames = (game.game_genres || []).map((gg: any) => gg.genres?.name).filter(Boolean);
+      const passesGenres = selectedGenres.length === 0 ||
+        selectedGenres.some((g) => gameGenreNames.includes(g));
+
+      return passesViewMode && passesSearch && passesPlatform && passesPlaythroughPlatform && passesNumberOfPlayers && passesGenres;
     }).sort((a, b) => {
       // View-specific sorting takes precedence over manual filter sorting
       if (viewMode === 'backlog') {
