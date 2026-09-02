@@ -25,6 +25,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { 
   Search, 
   Filter, 
@@ -46,8 +51,9 @@ import {
   Timer,
   ChevronDown,
   ShoppingBag,
-  Tag,
-  Drama
+Tag,
+  Drama,
+  MessageSquare
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -523,6 +529,30 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
   );
 };
 
+// Comment indicator for backlog items: icon shown when a game has a comment,
+// hovering (or tapping on touch) opens a popup with the full markdown comment.
+const CommentIndicator = ({ comment }: { comment: string }) => {
+  const isMobile = useIsMobile();
+  return (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center text-muted-foreground hover:text-foreground transition-colors cursor-help"
+          title="View comment"
+        >
+          <MessageSquare className={isMobile ? "h-3 w-3" : "h-2.5 w-2.5"} />
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" side="top" className="w-80 max-h-72 overflow-y-auto p-3">
+        <div className="text-sm prose prose-sm dark:prose-invert max-w-none [&>*]:my-0">
+          <ReactMarkdown remarkPlugins={[remarkBreaks]}>{comment}</ReactMarkdown>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+};
+
 interface GameListItemProps {
   game: any;
   viewMode: ViewMode;
@@ -847,12 +877,13 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                   {formatPrice(game.price)}
                 </span>
               )}
-              {viewMode === 'tosort' && game.release_date && (
+{viewMode === 'tosort' && game.release_date && (
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   {new Date(game.release_date).toLocaleDateString()}
                 </span>
               )}
+              {viewMode === 'backlog' && game.comment && <CommentIndicator comment={game.comment} />}
             </div>
           </div>
           
@@ -1009,12 +1040,13 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                       {game.achievements}
                     </span>
                   )}
-                  {game.number_of_players && (
+{game.number_of_players && (
                     <span className="flex items-center gap-1">
                       <Users className="h-2.5 w-2.5" />
                       {game.number_of_players}
                     </span>
                   )}
+                  {game.comment && <CommentIndicator comment={game.comment} />}
                 </>
               )}
               
