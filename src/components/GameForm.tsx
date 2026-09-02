@@ -384,6 +384,20 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
         throw error;
       }
 
+      // When the game just became completed, record a new playthrough — the
+      // same action the "Mark as complete" menu item performs.
+      if (savedGameId && user && justCompleted) {
+        const completionDate = formData.completionDate || new Date().toISOString().split('T')[0];
+        const { error: pErr } = await supabase.from('playthroughs').insert({
+          user_id: user.id,
+          game_id: savedGameId,
+          completion_date: completionDate,
+          playtime: formData.actualPlaytime ? parseInt(formData.actualPlaytime) : null,
+          platform: formData.playthroughPlatform || null,
+        });
+        if (pErr) console.error("Error recording playthrough:", pErr);
+      }
+
       // Save game stores
       if (savedGameId && user) {
         // Delete existing game_stores
