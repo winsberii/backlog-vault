@@ -333,13 +333,18 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     setIsLoading(true);
     
     try {
+      // Toggling "Completed" mirrors the "Mark as complete" menu item: it
+      // turns off Currently Playing and records a new playthrough.
+      const wasCompleted = !!game?.is_completed;
+      const justCompleted = formData.isCompleted && !wasCompleted;
+
       const gameData = {
         user_id: user.id,
         title: formData.title,
         platform: formData.platform || null,
         playthrough_platform: formData.playthroughPlatform || null,
         cover_image: formData.coverImage || null,
-        is_currently_playing: formData.isCurrentlyPlaying,
+        is_currently_playing: formData.isCompleted ? false : formData.isCurrentlyPlaying,
         is_completed: formData.isCompleted,
         needs_purchase: formData.needsPurchase,
         estimated_duration: formData.estimatedDuration ? parseInt(formData.estimatedDuration) : null,
