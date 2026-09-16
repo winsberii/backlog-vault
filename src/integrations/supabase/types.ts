@@ -112,6 +112,7 @@ export type Database = {
           price: number | null
           release_date: string | null
           release_notified_at: string | null
+          resolution: string | null
           retro_achievement_url: string | null
           skipped: string | null
           title: string
@@ -138,6 +139,7 @@ export type Database = {
           price?: number | null
           release_date?: string | null
           release_notified_at?: string | null
+          resolution?: string | null
           retro_achievement_url?: string | null
           skipped?: string | null
           title: string
@@ -164,6 +166,7 @@ export type Database = {
           price?: number | null
           release_date?: string | null
           release_notified_at?: string | null
+          resolution?: string | null
           retro_achievement_url?: string | null
           skipped?: string | null
           title?: string
@@ -184,6 +187,13 @@ export type Database = {
             columns: ["playthrough_platform"]
             isOneToOne: false
             referencedRelation: "platforms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "games_resolution_fkey"
+            columns: ["resolution"]
+            isOneToOne: false
+            referencedRelation: "resolutions"
             referencedColumns: ["id"]
           },
         ]
@@ -301,6 +311,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      resolutions: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       stores: {
         Row: {

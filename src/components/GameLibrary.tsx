@@ -53,6 +53,7 @@ import {
   ShoppingBag,
 Tag,
   Drama,
+  Monitor,
   MessageSquare
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,6 +87,8 @@ export const GameLibrary = ({ viewMode, onEditGame, refreshTrigger, onStatsChang
     estimated_duration, actual_playtime, completion_date, price, comment,
     created_at, platform, playthrough_platform, tosort, achievements, skipped,
     number_of_players, how_long_to_beat_url, retro_achievement_url, release_date,
+    resolution,
+    resolution_info:resolution(name),
     platform_info:platform(name),
     playthrough_platform_info:playthrough_platform(name),
     game_stores(store_id, stores(name)),
@@ -1029,6 +1032,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5">
                       <Drama className="h-2.5 w-2.5" />
                       {firstGenreName}
+                    </Badge>
+                  )}
+                  {game.resolution_info?.name && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5">
+                      <Monitor className="h-2.5 w-2.5" />
+                      {game.resolution_info.name}
                     </Badge>
                   )}
                   {game.actual_playtime > 0 && (
