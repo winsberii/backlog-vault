@@ -953,6 +953,22 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
                           </SelectContent>
                         </Select>
                       </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="resolution">Native Resolution</Label>
+                        <Select value={formData.resolution} onValueChange={(value) => handleInputChange("resolution", value)}>
+                          <SelectTrigger className="bg-background border-border">
+                            <SelectValue placeholder="Select native resolution" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {resolutions.map((resolution) => (
+                              <SelectItem key={resolution.id} value={resolution.id}>
+                                {resolution.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
