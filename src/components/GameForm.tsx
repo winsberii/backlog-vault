@@ -40,6 +40,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
   const [showSearchDialog, setShowSearchDialog] = useState(false);
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [activePlatforms, setActivePlatforms] = useState<any[]>([]);
+  const [resolutions, setResolutions] = useState<any[]>([]);
   const [duplicateGames, setDuplicateGames] = useState<any[]>([]);
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [dateError, setDateError] = useState<string>("");
@@ -57,6 +58,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
     title: game?.title || "",
     platform: game?.platform || "",
     playthroughPlatform: game?.playthrough_platform || "",
+    resolution: game?.resolution || "",
     coverImage: game?.cover_image || "",
     isCurrentlyPlaying: game?.is_currently_playing || false,
     isCompleted: game?.is_completed || false,
@@ -92,6 +94,13 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
           .select('*')
           .eq('active', true)
           .order('display_order');
+
+        // Fetch native resolutions
+        const { data: resolutionsData } = await supabase
+          .from('resolutions')
+          .select('*')
+          .order('display_order');
+        setResolutions(resolutionsData || []);
 
         // Fetch player templates
         const { data: templatesData } = await supabase
@@ -343,6 +352,7 @@ export const GameForm = ({ game, onClose, onSave }: GameFormProps) => {
         title: formData.title,
         platform: formData.platform || null,
         playthrough_platform: formData.playthroughPlatform || null,
+        resolution: formData.resolution || null,
         cover_image: formData.coverImage || null,
         is_currently_playing: formData.isCompleted ? false : formData.isCurrentlyPlaying,
         is_completed: formData.isCompleted,
