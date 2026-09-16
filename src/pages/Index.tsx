@@ -11,6 +11,7 @@ import { Plus, FileSpreadsheet, Gamepad, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PlatformManager } from "@/components/PlatformManager";
+import { ResolutionManager } from "@/components/ResolutionManager";
 import { Statistics } from "@/components/Statistics";
 export type ViewMode = 'backlog' | 'wishlist' | 'completed' | 'tosort' | 'skipped' | 'api-keys' | 'platforms' | 'statistics';
 const Index = () => {
@@ -136,7 +137,10 @@ const Index = () => {
             <ApiKeyManager />
           </div>
         ) : currentView === 'platforms' ? (
-          <PlatformManager />
+          <div className="space-y-6">
+            <PlatformManager />
+            <ResolutionManager />
+          </div>
         ) : currentView === 'statistics' ? (
           <Statistics />
         ) : (
