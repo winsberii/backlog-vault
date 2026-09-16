@@ -53,6 +53,7 @@ import {
   ShoppingBag,
 Tag,
   Drama,
+  Monitor,
   MessageSquare
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -1031,6 +1032,12 @@ const GameListItem = ({ game, viewMode, onEdit, onRefresh, onPatch, onRemove }: 
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5">
                       <Drama className="h-2.5 w-2.5" />
                       {firstGenreName}
+                    </Badge>
+                  )}
+                  {game.resolution_info?.name && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5">
+                      <Monitor className="h-2.5 w-2.5" />
+                      {game.resolution_info.name}
                     </Badge>
                   )}
                   {game.actual_playtime > 0 && (
