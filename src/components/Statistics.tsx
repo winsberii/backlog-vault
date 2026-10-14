@@ -38,7 +38,7 @@ export const Statistics = () => {
       const [gamesRes, platformsRes] = await Promise.all([
         supabase
           .from("games")
-          .select("is_completed, skipped, completion_date, actual_playtime, estimated_duration, created_at, platform, tosort")
+          .select("is_completed, skipped, completion_date, actual_playtime, estimated_duration, created_at, platform, playthrough_platform, tosort")
           .eq("user_id", user.id),
         supabase
           .from("platforms")
@@ -51,7 +51,7 @@ export const Statistics = () => {
     })();
   }, [user]);
 
-  const { byYear, totals, byPlatform } = useMemo(() => {
+  const { byYear, totals, byPlatform, byYearPlatform, years } = useMemo(() => {
     const map = new Map<string, YearStats>();
     const ensure = (y: string) => {
       if (!map.has(y)) map.set(y, { year: y, completed: 0, duration: 0, skipped: 0 });
@@ -60,6 +60,10 @@ export const Statistics = () => {
     let tC = 0, tD = 0, tS = 0;
 
     const platformMap = new Map<string, PlatformStats>();
+    // Completed games broken down by platform and year:
+    // key = platform name, value = Map<year, count>
+    const yearPlatformMap = new Map<string, Map<string, number>>();
+    const yearSet = new Set<string>();
 
     for (const g of rows) {
       if (g.is_completed) {
@@ -71,6 +75,15 @@ export const Statistics = () => {
         s.duration += dur;
         tC += 1;
         tD += dur;
+
+        const platform = platforms.find(
+          (p) => p.id === (g.playthrough_platform || g.platform)
+        );
+        const pName = platform?.name || "Unknown";
+        yearSet.add(y);
+        if (!yearPlatformMap.has(pName)) yearPlatformMap.set(pName, new Map());
+        const pm = yearPlatformMap.get(pName)!;
+        pm.set(y, (pm.get(y) || 0) + 1);
       }
       if (g.skipped) {
         const y = g.created_at ? new Date(g.created_at).getFullYear().toString() : "Unknown";
@@ -100,7 +113,15 @@ export const Statistics = () => {
     const byPlatform = Array.from(platformMap.values()).sort(
       (a, b) => b.estimatedDuration - a.estimatedDuration || b.count - a.count
     );
-    return { byYear, totals: { completed: tC, duration: tD, skipped: tS }, byPlatform };
+    const years = Array.from(yearSet).sort((a, b) => b.localeCompare(a));
+    const byYearPlatform = Array.from(yearPlatformMap.entries())
+      .map(([name, counts]) => ({
+        name,
+        counts,
+        total: Array.from(counts.values()).reduce((s, c) => s + c, 0),
+      }))
+      .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+    return { byYear, totals: { completed: tC, duration: tD, skipped: tS }, byPlatform, byYearPlatform, years };
   }, [rows, platforms]);
 
   if (isLoading) {
@@ -167,6 +188,44 @@ export const Statistics = () => {
                 ))}
               </TableBody>
             </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Completed by Platform &amp; Year</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {byYearPlatform.length === 0 ? (
+            <div className="text-muted-foreground text-sm">No completed games yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Platform</TableHead>
+                    {years.map((y) => (
+                      <TableHead key={y} className="text-right">{y}</TableHead>
+                    ))}
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {byYearPlatform.map((p) => (
+                    <TableRow key={p.name}>
+                      <TableCell className="font-medium">{p.name}</TableCell>
+                      {years.map((y) => (
+                        <TableCell key={y} className="text-right">
+                          {p.counts.get(y) || 0}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right font-medium">{p.total}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
