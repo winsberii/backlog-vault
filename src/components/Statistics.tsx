@@ -194,6 +194,44 @@ export const Statistics = () => {
 
       <Card>
         <CardHeader>
+          <CardTitle>Completed by Platform &amp; Year</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {byYearPlatform.length === 0 ? (
+            <div className="text-muted-foreground text-sm">No completed games yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Platform</TableHead>
+                    {years.map((y) => (
+                      <TableHead key={y} className="text-right">{y}</TableHead>
+                    ))}
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {byYearPlatform.map((p) => (
+                    <TableRow key={p.name}>
+                      <TableCell className="font-medium">{p.name}</TableCell>
+                      {years.map((y) => (
+                        <TableCell key={y} className="text-right">
+                          {p.counts.get(y) || 0}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right font-medium">{p.total}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Backlog by Platform</CardTitle>
         </CardHeader>
         <CardContent>
