@@ -38,7 +38,7 @@ export const Statistics = () => {
       const [gamesRes, platformsRes] = await Promise.all([
         supabase
           .from("games")
-          .select("is_completed, skipped, completion_date, actual_playtime, estimated_duration, created_at, platform, tosort")
+          .select("is_completed, skipped, completion_date, actual_playtime, estimated_duration, created_at, platform, playthrough_platform, tosort")
           .eq("user_id", user.id),
         supabase
           .from("platforms")
