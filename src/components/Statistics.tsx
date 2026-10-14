@@ -113,7 +113,15 @@ export const Statistics = () => {
     const byPlatform = Array.from(platformMap.values()).sort(
       (a, b) => b.estimatedDuration - a.estimatedDuration || b.count - a.count
     );
-    return { byYear, totals: { completed: tC, duration: tD, skipped: tS }, byPlatform };
+    const years = Array.from(yearSet).sort((a, b) => b.localeCompare(a));
+    const byYearPlatform = Array.from(yearPlatformMap.entries())
+      .map(([name, counts]) => ({
+        name,
+        counts,
+        total: Array.from(counts.values()).reduce((s, c) => s + c, 0),
+      }))
+      .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+    return { byYear, totals: { completed: tC, duration: tD, skipped: tS }, byPlatform, byYearPlatform, years };
   }, [rows, platforms]);
 
   if (isLoading) {
