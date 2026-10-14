@@ -51,7 +51,7 @@ export const Statistics = () => {
     })();
   }, [user]);
 
-  const { byYear, totals, byPlatform } = useMemo(() => {
+  const { byYear, totals, byPlatform, byYearPlatform, years } = useMemo(() => {
     const map = new Map<string, YearStats>();
     const ensure = (y: string) => {
       if (!map.has(y)) map.set(y, { year: y, completed: 0, duration: 0, skipped: 0 });
@@ -60,6 +60,10 @@ export const Statistics = () => {
     let tC = 0, tD = 0, tS = 0;
 
     const platformMap = new Map<string, PlatformStats>();
+    // Completed games broken down by platform and year:
+    // key = platform name, value = Map<year, count>
+    const yearPlatformMap = new Map<string, Map<string, number>>();
+    const yearSet = new Set<string>();
 
     for (const g of rows) {
       if (g.is_completed) {
@@ -71,6 +75,15 @@ export const Statistics = () => {
         s.duration += dur;
         tC += 1;
         tD += dur;
+
+        const platform = platforms.find(
+          (p) => p.id === (g.playthrough_platform || g.platform)
+        );
+        const pName = platform?.name || "Unknown";
+        yearSet.add(y);
+        if (!yearPlatformMap.has(pName)) yearPlatformMap.set(pName, new Map());
+        const pm = yearPlatformMap.get(pName)!;
+        pm.set(y, (pm.get(y) || 0) + 1);
       }
       if (g.skipped) {
         const y = g.created_at ? new Date(g.created_at).getFullYear().toString() : "Unknown";
